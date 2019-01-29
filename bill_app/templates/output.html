@@ -81,16 +81,15 @@
   
   <div class="container">
     <div class="starter-template">
-      <h3>Results:</h3>
-      <p class="lead">Below is the result of your query.<br> 
-        You just took user input and looked up the bill information!</p>
+      <h3>Bill Information</h3>
+      <p class="lead">Below is the result of your query.<br> </p>
     </div>
     
     <table class="table table-hover">
     <tr><th>Bill ID</th><th>Official Title</th><th>Bill Top Topic</th></tr>
-    <!--{% for birth in births %} -->
-    <tr><td>{{ bill_id }}</td><td>{{ official_title}}</td><td> {{ subjects_top_term }}</td></tr>
-    <!--{% endfor %} -->
+    {% for bill in bills %}
+    <tr><td>{{ bill['bill_id'] }}</td><td>{{ bill['official_title'] }}</td><td> {{ bill['subjects_top_term'] }}</td></tr>
+    {% endfor %}
     </table>
    
 
@@ -98,9 +97,12 @@
 
    <div class="container">
     <div class="starter-template">
-      <h3>Another Result:</h3>
-      <p class="lead">Here is a summarization of bill {{bill_id}} titled {{official_title}}<br>
-        The result is {{summarization_result}}</p>
+      <h3>Summarization:</h3>
+      {% for bill in bills %}
+      <p class="lead">Here is a summarization of bill <br><br> {{ bill['bill_id'] }} <br><br> {{ bill['official_title'] }}<br><br>
+         {{summarization_result}}</p>
+      {% endfor %}
+
     </div>
 
 

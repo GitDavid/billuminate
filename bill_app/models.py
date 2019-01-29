@@ -12,7 +12,7 @@ from gensim.summarization import summarize, keywords
 
 def do_summarization(string_xml):
     string_length = len(string_xml)
-    print(string_length)
+    print('text length: {}'.format(string_length))
     tree = etree.fromstring(string_xml)
 
     text = ""
@@ -21,6 +21,6 @@ def do_summarization(string_xml):
             text += elt.text + ' '
 
     summarized = summarize(text)
-    print(len(summarized))
+    print('summary length: {}'.format(len(summarized)))
 
     return summarized
