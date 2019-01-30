@@ -9,67 +9,60 @@
     <p>Select a bill from the drop-down menu!</p>
   </div>
 
-<div class = "container">
+  <div class = "container">
 
-  <form action="/output" method="GET">
-    <div class="form-group">
+    <form action="/output" method="GET">
+      <div class="form-group">
 
-      <label for="bill_id">Bill ID:</label> <br>      
-      <select width="1000px" name="bill_id" id="bill_id">  <!-- size=10-->
-        {% for x in bill_list %}
-        <option value="{{ x }}"{% if loop.first %} SELECTED{% endif %}>{{ x }}</option>
-        {% endfor %}
-      </select>
-    </div>
+        <label for="bill_id">Bill ID:</label> <br>      
+        <select width="1000px" name="bill_id" id="bill_id">  <!-- size=10-->
+          {% for x in bill_list %}
+          <option value="{{ x }}"{% if loop.first %} SELECTED{% endif %}>{{ x }}</option>
+          {% endfor %}
+        </select>
+      </div>
 
-    <div>
-      <button type="submit" class="btn btn-default btn-lg">Summarize this Bill!</button>
-    </div>
+      <div>
+        <button type="submit" class="btn btn-default btn-lg">Summarize this Bill!</button>
+      </div>
 
-  </form>
-</div>
+    </form>
+  </div>
 
-<script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
-<script src="static/js/bootstrap.min.js"></script>
 
-</div> <!-- /.container-->
+</div> 
   
   
-  <div class="container">
-    <div class="starter-template">
-      <h3>Bill Information</h3>
-      <p class="lead">Below is the result of your query.<br> </p>
-    </div>
-    
-    <table class="table table-hover">
+<div class="container">
+
+  <div class="starter-template">
+    <h3>Bill Information</h3>
+    <p class="lead">Below is the result of your query.<br> </p>
+  </div>
+  
+  <table class="table table-hover">
     <tr><th>Bill ID</th><th>Official Title</th><th>Bill Top Topic</th></tr>
     {% for bill in bills %}
     <tr><td>{{ bill['bill_id'] }}</td><td>{{ bill['official_title'] }}</td><td> {{ bill['subjects_top_term'] }}</td></tr>
     {% endfor %}
-    </table>
-   
+  </table>
 
-   </div>
+</div>
 
-   <div class="container">
-    <div class="starter-template">
-      <h3>Summarization:</h3>
-      {% for bill in bills %}
-      <p class="lead">Here is a summarization of bill <br><br> {{ bill['bill_id'] }} <br><br> {{ bill['official_title'] }}<br><br>
-         {{summarization_result}}</p>
-      {% endfor %}
+<div class="container">
 
-    </div>
+  <div class="starter-template">
+    <h3>Summarization:</h3>
+    {% for bill in bills %}
+    <p class="lead">Here is a summarization of bill <br><br> 
+      {{ bill['bill_id'] }} <br><br> 
+      {{ bill['official_title'] }} <br><br> 
+      {{summarization_result}}
+    </p>
+    {% endfor %}
+
+  </div>
+
+</div>
 
 {% endblock %}
-
-    <script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
-    <script src="static/js/bootstrap.min.js"></script>
-
-
-   </div><!-- /.container -->
-
-  <!-- Bootstrap core JavaScript
-  ================================================== -->
-  </body>
-</html>
