@@ -18,15 +18,15 @@ con = None
 con = psycopg2.connect(database=dbname,
                        user=user)
 
-
 @app.route('/')
-@app.route('/index')
-def index():
-    return render_template("index.html",
-                           title='Home',
-                           user={'nickname': 'Melissa'},
-                           )
-
+@app.route('/bill_input')
+def bill_input():
+    query_list = "SELECT bill_id FROM bills;"
+    query_list_results = pd.read_sql_query(query_list, con)
+    bill_id_list = list(query_list_results['bill_id'])
+    return render_template("bill_search.html",
+                           title='Bill selector',
+                           bill_list=bill_id_list)
 
 @app.route('/db')
 def bill_page():
@@ -57,14 +57,7 @@ def bills_page_fancy():
     return render_template('bill_list.html', bills=bills)
 
 
-@app.route('/input')
-def bills_input():
-    query_list = "SELECT bill_id FROM bills;"
-    query_list_results = pd.read_sql_query(query_list, con)
-    bill_id_list = list(query_list_results['bill_id'])
-    return render_template("input.html",
-                           title='Bill selector',
-                           bill_list=bill_id_list)
+
 
 
 @app.route('/output')

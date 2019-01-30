@@ -15,7 +15,7 @@
       <div class="form-group">
 
         <label for="bill_id">Bill ID:</label> <br>      
-        <select width="1000px" name="bill_id" id="bill_id">  <!-- size=10-->
+        <select width="1000px" name="bill_id" id="bill_id"> 
           {% for x in bill_list %}
           <option value="{{ x }}"{% if loop.first %} SELECTED{% endif %}>{{ x }}</option>
           {% endfor %}
