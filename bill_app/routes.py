@@ -99,6 +99,11 @@ def bills_output():
     string_xml = query_text_results.iloc[0]['text']
     summarization_result = models.do_summarization(string_xml)
 
+    query_list = "SELECT bill_id FROM bills;"
+    query_list_results = pd.read_sql_query(query_list, con)
+    bill_id_list = list(query_list_results['bill_id'])
+
     return render_template("output.html",
                            summarization_result=summarization_result, 
-                           bills=bills)
+                           bills=bills, 
+                           bill_list=bill_id_list)
