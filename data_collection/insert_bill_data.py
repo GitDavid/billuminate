@@ -3,12 +3,29 @@ import pandas as pd
 import os
 import numpy
 import ast
+import re
+from lxml import etree
+import tqdm
 
 
 def import_csv(file_path):
     df = pd.read_csv(file_path)
     del df['Unnamed: 0']
     return df
+
+
+def _choose_bill(folder_contents):
+    return [k for k in folder_contents if (k.startswith('BILLS') &
+                                           k.endswith('xml'))][0]
+
+
+def _get_xml_paths(bill_path_root):
+
+    path_list = list(os.walk(bill_path_root))
+    file_paths = [os.path.join(x[0], _choose_bill(x[2])) for x in path_list
+                  if any(f.endswith('xml') for f in x[2])]
+    print('There are {} files to parse through'.format(len(file_paths)))
+    return file_paths
 
 
 def _SQLconstruct_bill_general_info():
@@ -106,6 +123,15 @@ def _SQLconstruct_bill_summaries():
     return sql, col_names, relational_cols
 
 
+def _SQLconstruct_bill_text():
+    sql = """
+          INSERT INTO bill_text (bill_ix, text) VALUES ((SELECT ls.id FROM
+          bills ls WHERE bill_id=%s), %s);
+          """
+    # print('The SQL query passed to psycopg2 /n{}'.format(sql))
+    return sql
+
+
 def bill_general_info(df):
 
     sql, col_names, relational_cols = _SQLconstruct_bill_general_info()
@@ -150,10 +176,32 @@ def bill_summaries(df):
     return df, sql
 
 
-def send_to_database(df_method, df_path,
+def bill_text(data_path):
+
+    sql = _SQLconstruct_bill_text()
+
+    xml_paths = _get_xml_paths(data_path)
+    for xml_path in xml_paths:
+        regex_pattern_00 = re.compile(r"\d\d\d([a-z]+)\d+")
+        match_00 = regex_pattern_00.search(xml_path).group()
+
+        regex_pattern_01 = re.compile(r"[a-z]+")
+        bill_type = regex_pattern_01.search(match_00).group()
+        congress, number = match_00.split(bill_type)
+        bill_id = '{}{}-{}'.format(bill_type, number, congress)
+
+        tree = etree.parse(xml_path, parser=etree.XMLParser(recover=True))
+        string_tree = etree.tostring(tree).decode()
+
+        data = (bill_id, string_tree,)
+        yield data, sql
+
+
+def send_to_database(db_method, data_path,
                      hostname='localhost',
                      username='melissaferrari',
-                     dbname='congressional_bills'):
+                     dbname='congressional_bills',
+                     from_dataframe=True):
 
     # connect to the PostgreSQL database
     db_conn = psycopg2.connect("host={} dbname={} user={}".format(hostname,
@@ -162,20 +210,25 @@ def send_to_database(df_method, df_path,
     # create a new cursor
     db_cursor = db_conn.cursor()
 
-    # get data to insert
-    df = import_csv(df_path)
-    df, sql_query = df_method(df)
+    if from_dataframe:
+        # get data to insert
+        df = import_csv(data_path)
+        df, sql_query = db_method(df)
 
-    for ix, row in df.iterrows():
-        insert_list = list(row)
+        for ix, row in tqdm.tqdm(df.iterrows()):
+            insert_list = list(row)
 
-        for ix in range(len(insert_list)):
-            if type(insert_list[ix]) == numpy.int64:
-                insert_list[ix] = int(insert_list[ix])
-            if type(insert_list[ix]) == numpy.bool_:
-                insert_list[ix] = bool(insert_list[ix])
+            for ix in range(len(insert_list)):
+                if type(insert_list[ix]) == numpy.int64:
+                    insert_list[ix] = int(insert_list[ix])
+                if type(insert_list[ix]) == numpy.bool_:
+                    insert_list[ix] = bool(insert_list[ix])
 
-        db_cursor.execute(sql_query, insert_list)
+            db_cursor.execute(sql_query, insert_list)
+
+    else:
+        for data, sql_query in tqdm.tqdm(bill_text(data_path)):
+            db_cursor.execute(sql_query, data)
 
     # commit the changes to the database
     db_conn.commit()
@@ -193,14 +246,25 @@ if __name__ == '__main__':
     username = 'melissaferrari'
 
     # Datapath
-    data_path = '/Users/melissaferrari/Projects/repo/bill-summarization/'
-    data_path += 'data_files/bill_details'
-    file_name = 'agg_propublica_113hr.csv'
-    df_path = os.path.join(data_path, file_name)
+    # data_path = '/Users/melissaferrari/Projects/repo/bill-summarization/'
+    # data_path += 'data_files/bill_details'
+    # file_name = 'agg_propublica_113hr.csv'
+    data_path = '/Users/melissaferrari/Projects/repo/congress/data/'
+    file_name = '114'
+    data_path = os.path.join(data_path, file_name)
 
-    df_methods = [bill_general_info, bill_summaries]
-    df_method = df_methods[1]
+    db_methods = [bill_general_info, bill_summaries, bill_text]
+    db_method = db_methods[2]
+    print('Applying {} to {}'.format(db_method.__name__,
+                                     data_path))
 
-    print('Applying {} to {}'.format(df_method.__name__,
-                                     df_path))
-    send_to_database(df_method, df_path)
+    if db_method in [bill_general_info, bill_summaries]:
+        from_dataframe = True
+    elif db_method in [bill_text]:
+        from_dataframe = False
+
+    send_to_database(db_method, data_path,
+                     hostname=hostname,
+                     username=username,
+                     dbname=dbname,
+                     from_dataframe=from_dataframe)
