@@ -4,27 +4,38 @@ import json
 import tqdm
 
 
-def aggregate_propublica_data(congress_session, bill_type):
-    raw_path = '/Users/melissaferrari/Projects/repo/congress/data-propublica/'
+def get_bill_path(base_path, congress_session, bill_type):
+    base_path = '/Users/melissaferrari/Projects/repo/congress/data-propublica/'
     bill_path_ext = '{}/{}/'.format(congress_session, bill_type)
-    bill_path = raw_path + bill_path_ext
-    bill_list = os.listdir(bill_path)
+    bill_path = base_path + bill_path_ext
+    return bill_path
 
-    bill_folder = bill_list[0]
+
+def get_json(file_path):
+    with open(os.path.join(file_path, 'data.json')) as f:
+        return json.load(f)
+
+
+def aggregate_propublica_data(base_path, congress_session, bill_type):
+
+    bill_path = get_bill_path(base_path, congress_session, bill_type)
+
+    bill_folders = os.listdir(bill_path)
+    bill_folders = [x for x in bill_folders if not x.startswith('.')]
+
+    # Create initial entry for dataframe
+    bill_folder = bill_folders[0]
     data_path = os.path.join(bill_path, bill_folder)
-    with open(os.path.join(data_path, 'data.json')) as f:
-        data = json.load(f)
 
+    data = get_json(os.path.join(data_path, 'data.json'))
     df = pd.DataFrame([data])
 
-    for bill_folder in tqdm.tqdm(bill_list[1:]):
+    # Fill the dataframe
+    for bill_folder in tqdm.tqdm(bill_folders[1:]):
         if bill_folder.startswith(bill_type):
             data_path = os.path.join(bill_path, bill_folder)
-
             try:
-                with open(os.path.join(data_path, 'data.json')) as f:
-                    data = json.load(f)
-
+                data = get_json(os.path.join(data_path, 'data.json'))
                 df = df.append([data])
             except Exception:
                 pass
@@ -36,7 +47,7 @@ def aggregate_propublica_data(congress_session, bill_type):
 
 if __name__ == "__main__":
 
-    congress_sessions = ['113']
+    congress_sessions = ['112']
     bill_types = ['hr', 's']
     for congress_session in congress_sessions:
         for bill_type in bill_types[1:]:
