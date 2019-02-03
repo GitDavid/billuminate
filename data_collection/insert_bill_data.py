@@ -188,6 +188,52 @@ def _SQLconstruct_bill_cosponsors():
     return sql, col_names, relational_cols
 
 
+def _SQLconstruct_bill_related():
+
+    # Construct SQL query data relatations
+    col_names = ['identified_by', 'reason']
+    cols_string = str(col_names)[1:-1]
+    cols_string = cols_string.replace("'", '')
+
+    vals_type = '%s, ' * len(col_names)
+    vals_type = vals_type[:-2]
+
+    relational_cols = ['bill_id', 'related_bill_id']
+    related_cols_str = str(relational_cols)[1:-1]
+    related_cols_str = related_cols_str.replace("'", '')
+
+    string_mapping = {"bill_id": "bill_ix",
+                      "related_bill_id": "related_bill_ix"}
+    for key in string_mapping.keys():
+        related_cols_str = related_cols_str.replace(key,
+                                                    string_mapping[key])
+
+    query_keys = related_cols_str.split(', ')
+
+    index = []
+    column_name = []
+    for ix, val in enumerate(query_keys):
+        index.append(ix)
+        column_name.append(val)
+    table_relate = pd.DataFrame({'column': column_name}, index=index)
+    table_relate['relation_column'] = ['bill_id', 'bill_id']
+    table_relate['relation_table'] = ['bills', 'bills']
+
+    query_list = ''
+    for ix, row in table_relate.iterrows():
+        query_list += '(SELECT ls.id FROM {} ls WHERE {}=%s),'.format(
+                        row['relation_table'], row['relation_column'])
+    query_list = query_list[:-1]
+
+    table_name = 'related_bills'
+    sql = "INSERT INTO {} ({}, {}) VALUES ({}, {})".format(table_name,
+                                                           cols_string,
+                                                           related_cols_str,
+                                                           vals_type,
+                                                           query_list)
+    return sql, col_names, relational_cols
+
+
 def bill_general_info(df):
 
     sql, col_names, relational_cols = _SQLconstruct_bill_general_info()
@@ -297,6 +343,40 @@ def bill_cosponsors(df):
     return df, sql
 
 
+def bill_related(df):
+
+    sql, col_names, relational_cols = _SQLconstruct_bill_related()
+
+    # Get related bill info
+    df = df[['related_bills', 'bill_id']].copy()
+    df['related_bills'] = df['related_bills'].apply(ast.literal_eval)
+    df = df.set_index(['bill_id'])['related_bills'].apply(pd.Series).stack()
+    df = df.reset_index()
+    del df['level_1']
+    df.columns = ['bill_id', 'related_bill']
+
+    df_indices = df.index
+
+    related_bills_dict = df['related_bill'].values.tolist()
+    related_bills_df = pd.DataFrame(related_bills_dict, index=df_indices)
+    del related_bills_df['type']
+    related_bills_df.columns = ['related_bill_id', 'identified_by', 'reason']
+
+    df = df.merge(related_bills_df, left_index=True, right_index=True)
+    del df['related_bill']
+
+    # Make sure we are only looking at related bills in database
+    df['congress'] = df['related_bill_id'].str.split('-').str[1]
+    df['congress'] = df['congress'].astype(int)
+    df = df[df['congress'].isin([113, 114, 115])]
+    del df['congress']
+
+    # Clean dataframe
+    df = df[col_names + relational_cols]
+
+    return df, sql
+
+
 def send_to_database(db_method, data_path,
                      hostname='localhost',
                      username='melissaferrari',
@@ -347,9 +427,13 @@ if __name__ == '__main__':
     username = 'melissaferrari'
 
     # Select database insert type
-    db_methods = [bill_general_info, bill_summaries,
-                  bill_text, bill_subjects, bill_cosponsors]
-    db_method = db_methods[4]
+    db_methods = {0: bill_general_info,
+                  1: bill_summaries,
+                  2: bill_text,
+                  3: bill_subjects,
+                  4: bill_cosponsors,
+                  5: bill_related}
+    db_method = db_methods[5]
 
     if db_method in [bill_text]:
         from_dataframe = False
@@ -357,10 +441,10 @@ if __name__ == '__main__':
         from_dataframe = True
 
     # Datapath
-    data_path = '/Users/melissaferrari/Projects/repo/bill-summarization/'
-    data_path += 'data_files/bill_details'
+    raw_path = '/Users/melissaferrari/Projects/repo/bill-summarization/'
+    raw_path += 'data_files/bill_details'
     """
-    data_path = '/Users/melissaferrari/Projects/repo/congress/data/'
+    raw_path = '/Users/melissaferrari/Projects/repo/congress/data/'
     file_name = '114'
     """
 
@@ -368,7 +452,7 @@ if __name__ == '__main__':
                   'agg_propublica_114hr.csv', 'agg_propublica_114s.csv',
                   'agg_propublica_115hr.csv', 'agg_propublica_115s.csv']
     for file_name in file_names:
-        data_path = os.path.join(data_path, file_name)
+        data_path = os.path.join(raw_path, file_name)
 
         print('Applying {} to {}'.format(db_method.__name__,
                                          data_path.split('/')[-1]))
