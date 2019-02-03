@@ -132,6 +132,62 @@ def _SQLconstruct_bill_text():
     return sql
 
 
+def _SQLconstruct_bill_subects():
+
+    sql = _SQLconstruct_bill_text()
+    sql = sql.replace("bill_text", "subjects")
+    sql = sql.replace("text)", "subject)")
+
+    return sql
+
+
+def _SQLconstruct_bill_cosponsors():
+
+    # Construct SQL query data relatations
+    col_names = ['original_cosponsor']
+    cols_string = str(col_names)[1:-1]
+    cols_string = cols_string.replace("'", '')
+
+    vals_type = '%s, ' * len(col_names)
+    vals_type = vals_type[:-2]
+
+    relational_cols = ['bill_id', 'bioguide_id']
+    related_cols_str = str(relational_cols)[1:-1]
+    related_cols_str = related_cols_str.replace("'", '')
+
+    string_mapping = {"bill_id": "bill_ix",
+                      "bioguide_id": "legislator_ix"}
+    for key in string_mapping.keys():
+        related_cols_str = related_cols_str.replace(key,
+                                                    string_mapping[key])
+
+    query_keys = related_cols_str.split(', ')
+
+    index = []
+    column_name = []
+    for ix, val in enumerate(query_keys):
+        index.append(ix)
+        column_name.append(val)
+    table_relate = pd.DataFrame({'column': column_name}, index=index)
+    table_relate['relation_column'] = ['bill_id', 'bioguide_id']
+    table_relate['relation_table'] = ['bills', 'legislators']
+
+    query_list = ''
+    for ix, row in table_relate.iterrows():
+        query_list += '(SELECT ls.id FROM {} ls WHERE {}=%s),'.format(
+                        row['relation_table'], row['relation_column'])
+    query_list = query_list[:-1]
+
+    table_name = 'cosponsorship'
+    sql = "INSERT INTO {} ({}, {}) VALUES ({}, {})".format(table_name,
+                                                           cols_string,
+                                                           related_cols_str,
+                                                           vals_type,
+                                                           query_list)
+
+    return sql, col_names, relational_cols
+
+
 def bill_general_info(df):
 
     sql, col_names, relational_cols = _SQLconstruct_bill_general_info()
@@ -197,6 +253,50 @@ def bill_text(data_path):
         yield data, sql
 
 
+def bill_subjects(df):
+
+    sql = _SQLconstruct_bill_subects()
+
+    # Get bill subject info
+    df = df[['subjects', 'bill_id']].copy()
+    df['subjects'] = df['subjects'].apply(ast.literal_eval)
+
+    df = df.set_index(['bill_id'])['subjects'].apply(pd.Series).stack()
+    df = df.reset_index()
+    del df['level_1']
+    df.columns = ['bill_id', 'subject']
+
+    return df, sql
+
+
+def bill_cosponsors(df):
+
+    sql, col_names, relational_cols = _SQLconstruct_bill_cosponsors()
+
+    # Get bill sponsor info
+    df = df[['cosponsors', 'bill_id']].copy()
+    df['cosponsors'] = df['cosponsors'].apply(ast.literal_eval)
+    df = df.set_index(['bill_id'])['cosponsors'].apply(pd.Series).stack()
+    df = df.reset_index()
+    del df['level_1']
+    df.columns = ['bill_id', 'cosponsor']
+
+    df_indices = df.index
+
+    cosponsor_dict = df['cosponsor'].values.tolist()
+    cosponsor_df = pd.DataFrame(cosponsor_dict,
+                                index=df_indices)[['bioguide_id',
+                                                   'original_cosponsor']]
+
+    df = df.merge(cosponsor_df, left_index=True, right_index=True)
+    del df['cosponsor']
+
+    # Clean dataframe
+    df = df[col_names + relational_cols]
+
+    return df, sql
+
+
 def send_to_database(db_method, data_path,
                      hostname='localhost',
                      username='melissaferrari',
@@ -215,6 +315,7 @@ def send_to_database(db_method, data_path,
         df = import_csv(data_path)
         df, sql_query = db_method(df)
 
+        print('There are {} rows to parse'.format(len(df)))
         for ix, row in tqdm.tqdm(df.iterrows()):
             insert_list = list(row)
 
@@ -245,26 +346,35 @@ if __name__ == '__main__':
     dbname = 'congressional_bills'
     username = 'melissaferrari'
 
+    # Select database insert type
+    db_methods = [bill_general_info, bill_summaries,
+                  bill_text, bill_subjects, bill_cosponsors]
+    db_method = db_methods[4]
+
+    if db_method in [bill_text]:
+        from_dataframe = False
+    else:
+        from_dataframe = True
+
     # Datapath
-    # data_path = '/Users/melissaferrari/Projects/repo/bill-summarization/'
-    # data_path += 'data_files/bill_details'
-    # file_name = 'agg_propublica_113hr.csv'
+    data_path = '/Users/melissaferrari/Projects/repo/bill-summarization/'
+    data_path += 'data_files/bill_details'
+    """
     data_path = '/Users/melissaferrari/Projects/repo/congress/data/'
     file_name = '114'
-    data_path = os.path.join(data_path, file_name)
+    """
 
-    db_methods = [bill_general_info, bill_summaries, bill_text]
-    db_method = db_methods[2]
-    print('Applying {} to {}'.format(db_method.__name__,
-                                     data_path))
+    file_names = ['agg_propublica_113hr.csv', 'agg_propublica_113s.csv',
+                  'agg_propublica_114hr.csv', 'agg_propublica_114s.csv',
+                  'agg_propublica_115hr.csv', 'agg_propublica_115s.csv']
+    for file_name in file_names:
+        data_path = os.path.join(data_path, file_name)
 
-    if db_method in [bill_general_info, bill_summaries]:
-        from_dataframe = True
-    elif db_method in [bill_text]:
-        from_dataframe = False
+        print('Applying {} to {}'.format(db_method.__name__,
+                                         data_path.split('/')[-1]))
 
-    send_to_database(db_method, data_path,
-                     hostname=hostname,
-                     username=username,
-                     dbname=dbname,
-                     from_dataframe=from_dataframe)
+        send_to_database(db_method, data_path,
+                         hostname=hostname,
+                         username=username,
+                         dbname=dbname,
+                         from_dataframe=from_dataframe)
