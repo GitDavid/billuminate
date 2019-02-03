@@ -2,6 +2,7 @@
 data_files/
 resources/
 nlp_models/
+.vsccode/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
