@@ -433,7 +433,7 @@ if __name__ == '__main__':
                   3: bill_subjects,
                   4: bill_cosponsors,
                   5: bill_related}
-    db_method = db_methods[5]
+    db_method = db_methods[4]
 
     if db_method in [bill_text]:
         from_dataframe = False
