@@ -1,7 +1,8 @@
 # Melissa added
 data_files/
 resources/
-nlp_models/
+nlp_models
+training_checkpoints/
 .vsccode/*
 
 # Byte-compiled / optimized / DLL files
