@@ -158,6 +158,8 @@ VALUES
     ('GOVTRACK');
 
 CREATE TABLE bill_text (
-    bill_id INT,
-    text TEXT
+    bill_ix INT,
+    bill_version_id INT,
+    text TEXT,
+ --   PRIMARY KEY (bill_ix, bill_version_id)
 );

@@ -125,8 +125,9 @@ def _SQLconstruct_bill_summaries():
 
 def _SQLconstruct_bill_text():
     sql = """
-          INSERT INTO bill_text (bill_ix, text) VALUES ((SELECT ls.id FROM
-          bills ls WHERE bill_id=%s), %s);
+          INSERT INTO bill_text (bill_ix, text, bill_version_id) VALUES 
+          ((SELECT ls.id FROM bills ls WHERE bill_id=%s), %s, 
+           COALESCE((SELECT ls.id FROM bill_versions ls WHERE code=%s), -1));
           """
     # print('The SQL query passed to psycopg2 /n{}'.format(sql))
     return sql
@@ -293,9 +294,14 @@ def bill_text(data_path):
         bill_id = '{}{}-{}'.format(bill_type, number, congress)
 
         tree = etree.parse(xml_path, parser=etree.XMLParser(recover=True))
+
+        for elt in tree.getiterator('{http://purl.org/dc/elements/1.1/}title'):
+            title = elt.text
+            version_id = title.split(':')[0].split(' ')[-1]
+            # print(version_id)
         string_tree = etree.tostring(tree).decode()
 
-        data = (bill_id, string_tree,)
+        data = (bill_id, string_tree, version_id,)
         yield data, sql
 
 
@@ -409,8 +415,13 @@ def send_to_database(db_method, data_path,
 
     else:
         for data, sql_query in tqdm.tqdm(bill_text(data_path)):
-            db_cursor.execute(sql_query, data)
-
+            try:
+                db_cursor.execute(sql_query, data)
+            except Exception as e:
+                print(str(e))
+            # db_cursor.rollback()
+                print(sql_query, data)
+                raise
     # commit the changes to the database
     db_conn.commit()
 
@@ -433,7 +444,7 @@ if __name__ == '__main__':
                   3: bill_subjects,
                   4: bill_cosponsors,
                   5: bill_related}
-    db_method = db_methods[4]
+    db_method = db_methods[2]
 
     if db_method in [bill_text]:
         from_dataframe = False
@@ -443,15 +454,14 @@ if __name__ == '__main__':
     # Datapath
     raw_path = '/Users/melissaferrari/Projects/repo/bill-summarization/'
     raw_path += 'data_files/bill_details'
-    """
-    raw_path = '/Users/melissaferrari/Projects/repo/congress/data/'
-    file_name = '114'
-    """
-
     file_names = ['agg_propublica_113hr.csv', 'agg_propublica_113s.csv',
                   'agg_propublica_114hr.csv', 'agg_propublica_114s.csv',
                   'agg_propublica_115hr.csv', 'agg_propublica_115s.csv']
-    for file_name in file_names:
+
+    raw_path = '/Users/melissaferrari/Projects/repo/congress/data/'
+    file_names = ['114', '113', '115']
+
+    for file_name in file_names[:1]:
         data_path = os.path.join(raw_path, file_name)
 
         print('Applying {} to {}'.format(db_method.__name__,
