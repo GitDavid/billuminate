@@ -2,24 +2,40 @@
 
 {% block content %}
 
+
+<!-- AUTOCOMPLETE BILL FIELD -->
+<script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
+<script src="../static/js/bootstrap.min.js"></script>
+<script src="../static/js/jquery-ui.min.js"></script>
+
+<script>
+    $(function() {
+     $( "#bill_autocomplete" ).autocomplete({
+      source: function( request, response ) {
+        $.ajax({
+          url: '/api/bills/' + request.term,
+          dataType: "json",
+          success: function( data ) {
+            response( data );
+          }
+        });
+      },
+      minLength: 2
+    });
+  });
+</script>
+
 <div class="container">
 
-  <div class="starter-template">
+  <div>
     <h2>Bill Chooser</h2>
-    <p>Select a bill from the drop-down menu!</p>
+    <p>Start typing a bill id!</p>
   </div>
-
-  <div class = "container">
-
-    <form action="/output" method="GET">
+  <div>
+    <form action="/output" method="GET" method="POST" role="form">
       <div class="form-group">
-
-        <label for="bill_id">Bill ID:</label> <br>      
-        <select width="1000px" name="bill_id" id="bill_id"> 
-          {% for x in bill_list %}
-          <option value="{{ x }}"{% if loop.first %} SELECTED{% endif %}>{{ x }}</option>
-          {% endfor %}
-        </select>
+          {{ form.bill_id.label }}
+          {{ form.bill_id }}
       </div>
 
       <div>
@@ -28,38 +44,32 @@
 
     </form>
   </div>
+</div>
 
 
-</div> 
-  
-  
 <div class="container">
 
   <div class="starter-template">
     <h3>Bill Information</h3>
     <p class="lead">Below is the result of your query.<br> </p>
   </div>
-  
-  <table class="table table-hover">
-    <tr><th>Bill ID</th><th>Official Title</th><th>Bill Top Topic</th></tr>
-    {% for bill in bills %}
-    <tr><td>{{ bill['bill_id'] }}</td><td>{{ bill['official_title'] }}</td><td> {{ bill['subjects_top_term'] }}</td></tr>
-    {% endfor %}
-  </table>
 
+  <table class="table table-hover">
+      <tr><th>Bill ID</th><th>Official Title</th><th>Bill Top Topic</th></tr>
+      <tr><td>{{ bill_info.bill_id }}</td><td>{{ bill_info.official_title }}</td><td> {{ bill_info.subjects_top_term }}</td></tr>
+    </table>
+
+  
 </div>
 
 <div class="container">
 
   <div class="starter-template">
     <h3>Summarization:</h3>
-    {% for bill in bills %}
     <p class="lead">Here is a summarization of bill <br><br> 
-      {{ bill['bill_id'] }} <br><br> 
-      {{ bill['official_title'] }} <br><br> 
+      {{ bill_info.official_title }} <br><br> 
       {{summarization_result}}
     </p>
-    {% endfor %}
 
   </div>
 

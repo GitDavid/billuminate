@@ -14,7 +14,7 @@ def create_single_text_string(tree, tag='text'):
     text = ""
     for elt in tree.getiterator(tag):
         if isinstance(elt.text, str):
-            text += elt.text  + ' '
+            text += elt.text + ' '
     return text
 
 
