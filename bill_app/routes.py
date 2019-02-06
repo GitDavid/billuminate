@@ -29,27 +29,31 @@ def bills_output():
     print('BILL ID = {}'.format(bill_id))
 
     # just select the bill from the database
-    query_info = """
-                 SELECT bill_id, official_title, subjects_top_term
-                 FROM bills WHERE bill_id='%s';
-                 """
-    print(query_info)
-    query_text = """
-                 SELECT bill_ix, text FROM bill_text bt
-                 INNER JOIN bills b ON bt.bill_ix = b.id WHERE b.bill_id='%s';
-                 """
+    q_info = """
+             SELECT bill_id, official_title, subjects_top_term
+             FROM bills WHERE bill_id='%s';
+             """
+    print(q_info)
+    q_text = """
+             SELECT bill_ix, text FROM bill_text bt
+             INNER JOIN bills b ON bt.bill_ix = b.id WHERE b.bill_id='%s';
+             """
 
-    query_info_results = pd.read_sql_query(query_info % (bill_id,), con)
-    query_text_results = pd.read_sql_query(query_text % (bill_id,), con)
+    q_info_results = pd.read_sql_query(q_info % (bill_id,), con)
+    q_text_results = pd.read_sql_query(q_text % (bill_id,), con)
 
-    if len(query_text_results) == 0:
+    if len(q_text_results) == 0:
         raise Exception('Oh no! This bill is not in the database.')
 
-    # if len(query_text_results) > 1:
-    #    raise Exception('More than one bill mapped. Something is wrong!')
+    if len(q_text_results) > 1:
+        rank_codes = ['ENR', 'EAS', 'EAH', 'RS', 'ES',
+                      'PCS', 'EH', 'RH', 'IS', 'IH']
+        code = next(i for i in rank_codes if i in
+                    q_text_results['code'].unique())
+        q_text_results = q_text_results[q_text_results['code'] == code]
 
-    info_dict = query_info_results.loc[0].to_dict()
-    text_dict = query_text_results.loc[0].to_dict()
+    info_dict = q_info_results.loc[0].to_dict()
+    text_dict = q_text_results.loc[0].to_dict()
 
     string_xml = text_dict['text']
     summarization_result = models.do_summarization(string_xml)
