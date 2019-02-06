@@ -1,5 +1,5 @@
 # Melissa added
-data_files/
+data/
 resources/
 nlp_models
 training_checkpoints/
