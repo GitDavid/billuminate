@@ -18,10 +18,6 @@ con = psycopg2.connect(database=dbname,
                        user=user)
 
 
-class SearchForm(Form):
-    bill_id = TextField('Bill ID', id='bill_autocomplete')
-
-
 @app.route('/output', methods=['GET'])
 def bills_output():
 
@@ -58,57 +54,45 @@ def bills_output():
     string_xml = text_dict['text']
     summarization_result = models.do_summarization(string_xml)
 
-    form = SearchForm(request.form)
-
     return render_template("output.html",
                            summarization_result=summarization_result,
                            bill_info=info_dict,
-                           bill_text=text_dict,
-                           form=form)
+                           bill_text=text_dict,)
 
 
-@app.route('/api/bills/<bill_id>', methods=['GET'])
-def get_bills(bill_id):
+@app.route('/api/bills/id/<bill_id>', methods=['GET'])
+def get_bills_by_id(bill_id):
 
     query = "SELECT bill_id FROM bills WHERE bill_id LIKE '%" + bill_id + "%' LIMIT 10;"
     query_results = pd.read_sql_query(query, con)
-    #output_list = list(query_results.bill_id.astype(str).str.cat(query_results.official_title.astype(str), sep=' - '))
     output_list = list(query_results['bill_id'].values)
+    print(output_list)
+    return jsonify(output_list)
+
+
+@app.route('/api/bills/title/<title>', methods=['GET'])
+def get_bills_by_title(title):
+
+    query = "SELECT official_title FROM bills WHERE official_title LIKE '%" + title + "%' LIMIT 10;"
+    query_results = pd.read_sql_query(query, con)
+    output_list = list(query_results['official_title'].values)
+    print(output_list)
+    return jsonify(output_list)
+
+
+@app.route('/api/bills/subject/<subject>', methods=['GET'])
+def get_bills_by_subject(subject):
+
+    query = "SELECT subjects_top_term FROM bills WHERE subjects_top_term LIKE '%" + subject + "%' LIMIT 10;"
+    query_results = pd.read_sql_query(query, con)
+    output_list = list(query_results['subjects_top_term'].values)
     print(output_list)
     return jsonify(output_list)
 
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    form = SearchForm(request.form)
-    return render_template("bill_search.html",
-                           form=form)
-
-
-NAMES = ["hr2-114", "hr4-115", "s200-113", "hr20-114"]
-
-
-@app.route('/autocomplete', methods=['GET'])
-def autocomplete():
-    return Response(json.dumps(NAMES), mimetype='application/json')
-    # return jsonify(matching_results=NAMES)
-
-
-"""
-@app.route('/autocomplete', methods=['GET'])
-def autocomplete():
-    search = request.args.get('autocomplete')
-    query_list = "SELECT bill_id FROM bills WHERE bill_id LIKE '%"+ search+"%' LIMIT 10;""
-    print(query_list)
-    # query_list = query_list.replace("%%", "% %s %")
-    query_list_results = pd.read_sql_query(query_list % (search,), con)
-
-    df_dict = query_list_results.to_dict()
-    print(df_dict)
-    return Response(json.dumps(df_dict), mimetype='application/json')
-    # jsonify(matching_results=df_dict)
-
-"""
+    return render_template("bill_search.html",)
 
 
 @app.route('/db_fancy')
@@ -125,14 +109,3 @@ def bills_page_fancy():
                  subjects_top_term=query_results.iloc[i]['subjects_top_term'])
         bills.append(d)
     return render_template('bill_list.html', bills=bills)
-
-
-# @app.route('/')
-@app.route('/bill_input')
-def bill_input():
-    query_list = "SELECT bill_id FROM bills WHERE (id>=9000) AND (id<10000);"
-    query_list_results = pd.read_sql_query(query_list, con)
-    bill_id_list = list(query_list_results['bill_id'])
-    return render_template("bill_search.html",
-                           title='Bill selector',
-                           bill_list=bill_id_list)

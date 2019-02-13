@@ -6,43 +6,68 @@
 <script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
 <script src="../static/js/bootstrap.min.js"></script>
 <script src="../static/js/jquery-ui.min.js"></script>
+<script src="../static/js/bootstrap-slider.js"></script>
+<script src="../static/css/bootstrap-slider.css"></script>
 
 <script>
     $(function() {
-     $( "#bill_autocomplete" ).autocomplete({
-      source: function( request, response ) {
-        $.ajax({
-          url: '/api/bills/' + request.term,
-          dataType: "json",
-          success: function( data ) {
-            response( data );
-          }
+      $( "#bill_autocomplete" ).autocomplete({
+        source: function( request, response ) {
+          $.ajax({
+            url: '/api/bills/id/' + request.term,
+            dataType: "json",
+            success: function( data ) {
+              response( data );
+            }
+          });
+        },
+        minLength: 2
+      });
+
+      $( "#bill_title_autocomplete" ).autocomplete({
+        source: function( request, response ) {
+          $.ajax({
+            url: '/api/bills/title/' + request.term,
+            dataType: "json",
+            success: function( data ) {
+              response( data );
+            }
+          });
+        },
+        minLength: 2
         });
-      },
-      minLength: 2
-    });
-  });
+
+        $("#time_slider").bootstrapSlider();
+         $("#destroyTimeSlider").click(function() {
+           $("#time_slider").bootstrapSlider('destroy');
+            });
+
+      });
+
 </script>
 
-<div class="container">
 
-  <div>
-    <h2>Bill Chooser</h2>
-    <p>Start typing a bill id!</p>
+<div class="container" style="padding-top:50px;">
+    <div class="row">
+      <form action="/output" method="GET" method="POST" role="form">
+        <div id="header-search" class="form-group col-sm-12 row">
+          <div class="col-md-3">
+            <label for="bill_autocomplete" class="control-label">Bill ID</label>
+            <input id="bill_autocomplete" name="bill_id" type="text" value="" class="ui-autocomplete-input">
+          </div>
+          <div class="col-md-3">
+              <label for="bill_title_autocomplete" class="control-label">Bill Title</label>
+              <input id="bill_title_autocomplete" name="bill_title" type="text" value="" class="ui-autocomplete-input">
+          </div>
+          <div class="col-md-3">
+              
+          </div>
+          <div class="col-md-3">
+            <button type="submit" class="btn btn-default btn-lg">Summarize this Bill!</button>
+          </div>
+        </div>
+      </form>
+    </div>
   </div>
-  <div>
-    <form action="/output" method="GET" method="POST" role="form">
-      <div class="form-group">
-          {{ form.bill_id.label }}
-          {{ form.bill_id }}
-      </div>
-
-      <div>
-        <button type="submit" class="btn btn-default btn-lg">Summarize this Bill!</button>
-      </div>
-
-    </form>
-  </div>
-</div>
 
 {% endblock %}

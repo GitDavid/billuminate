@@ -1,8 +1,4 @@
-import sqlalchemy
-import psycopg2
-import os
-import numpy 
-import ast
+import numpy as np
 import pandas as pd
 import re
 from lxml import etree
