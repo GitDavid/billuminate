@@ -9,14 +9,20 @@ from wtforms import TextField, Form
 
 
 # Python code to connect to Postgres
-user = 'melissaferrari'  # add your Postgres username here
+user = 'postgres'  #'melissaferrari'  # add your Postgres username here
+# host = '/run/postgresql/' #'localhost'
 host = 'localhost'
 dbname = 'congressional_bills'
-db = create_engine('postgres://%s%s/%s' % (user, host, dbname))
-con = None
-con = psycopg2.connect(database=dbname,
-                       user=user)
+#db = create_engine('postgres://%s%s/%s' % (user, host, dbname))
+#con = None
+con = psycopg2.connect(database=dbname, user=user, host=host, password='password')# , port=5433) # host="/var/run/postgresql/" ,password='postgres')
 
+
+
+
+@app.route('/', methods=['GET', 'POST'])
+def index():
+    return render_template("bill_search.html",)
 
 @app.route('/output', methods=['GET'])
 def bills_output():
@@ -88,12 +94,6 @@ def get_bills_by_subject(subject):
     output_list = list(query_results['subjects_top_term'].values)
     print(output_list)
     return jsonify(output_list)
-
-
-@app.route('/', methods=['GET', 'POST'])
-def index():
-    return render_template("bill_search.html",)
-
 
 @app.route('/db_fancy')
 def bills_page_fancy():
