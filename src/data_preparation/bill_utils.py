@@ -8,6 +8,10 @@ import pandas as pd
 import text_utils
 
 
+def get_bill(df, bill_id):
+    return df[df.bill_id == bill_id].copy()
+
+
 def select_random_rows(df, n_rows):
     ixs = np.random.choice(df.index.values, n_rows)
     df = df.reindex(ixs)

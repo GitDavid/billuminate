@@ -8,6 +8,7 @@ import nltk
 import pandas as pd
 import rouge
 from sklearn.metrics.pairwise import cosine_similarity
+# import pickle
 
 NLP_MODEL_ROOT = '../../nlp_models/'
 
@@ -140,12 +141,18 @@ def _remove_custom(sentence_list, type='sec'):
 # ----- TEXT TO NUMBERS ----- #
 # --------------------------- #
 
-def _load_embeddings(path_to_embedding=None):
+def _load_embeddings(path_to_embedding=None, encoding=None):
+
+    if not encoding:
+        encoding = 'utf-8'
 
     if not path_to_embedding:
         path_to_embedding = NLP_MODEL_ROOT + 'glove.6B/glove.6B.300d.txt'
 
-    f = open(path_to_embedding, encoding='utf-8')
+    # with open(NLP_MODEL_ROOT + 'LeGlove.model', 'rb') as f:
+    #     embeddings = pickle.load(f, encoding='latin-1')
+
+    f = open(path_to_embedding, encoding)
     word_embeddings = {}
     for line in f:
         values = line.split()
