@@ -6,7 +6,7 @@ import numpy as np
 
 import nltk
 import pandas as pd
-import rouge
+#import rouge
 from sklearn.metrics.pairwise import cosine_similarity
 # import pickle
 

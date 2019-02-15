@@ -12,7 +12,8 @@ import spacy
 
 MODEL_ROOT = '../../models/'
 NLP_MODEL_ROOT = '../../nlp_models/'
-MODEL_ROOT = '/Users/melissaferrari/Projects/repo/bill-summarization/models/'
+MODEL_ROOT = '/home/ubuntu/insight/bill-summarization/models/'
+#'/Users/melissaferrari/Projects/repo/bill-summarization/models/'
 
 print('loading models')
 #nlp = spacy.load(NLP_MODEL_ROOT + 'en_core_web_lg')
