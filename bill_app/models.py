@@ -1,9 +1,14 @@
+import sys
+
 import numpy as np
 import pandas as pd
 import re
 from lxml import etree
 import numpy as np
 from gensim import summarization
+
+import feature_utils
+import bill_utils
 
 
 def create_single_text_string(tree, tag='text'):
@@ -25,3 +30,10 @@ def do_summarization(string_xml):
     print('summary length: {}'.format(len(summarized)))
 
     return summarized
+
+
+if __name__ == "__main__":
+
+    bill= {}
+    bill['official_title'] = 'okay'
+    feature_utils.prepare_features(bill)
