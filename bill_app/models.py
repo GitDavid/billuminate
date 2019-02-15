@@ -7,7 +7,7 @@ from lxml import etree
 import numpy as np
 from gensim import summarization
 
-import feature_utils
+from feature_utils import prepare_features
 import bill_utils
 
 
@@ -30,10 +30,3 @@ def do_summarization(string_xml):
     print('summary length: {}'.format(len(summarized)))
 
     return summarized
-
-
-if __name__ == "__main__":
-
-    bill= {}
-    bill['official_title'] = 'okay'
-    feature_utils.prepare_features(bill)

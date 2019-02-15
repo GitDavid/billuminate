@@ -1,28 +1,40 @@
-from flask import render_template, request, jsonify, Response
+from flask import render_template, request, jsonify  # Response
 from bill_app import app
-from sqlalchemy import create_engine
 import pandas as pd
 import psycopg2
-from bill_app import models
+from bill_app import models  # feature_utils, bill_utils, apply_model
 import json
 from wtforms import TextField, Form
+from apply_model import load_model, apply_model
+from bill_utils import retrieve_data
+import spacy
 
+
+MODEL_ROOT = '../../models/'
+NLP_MODEL_ROOT = '../../nlp_models/'
+MODEL_ROOT = '/Users/melissaferrari/Projects/repo/bill-summarization/models/'
+
+print('loading models')
+nlp = spacy.load(NLP_MODEL_ROOT + 'en_core_web_lg')
+model_name = 'over_RandomForestClassifier_on_health_nestimators100_random_state0.pkl'
+current_model = load_model(MODEL_ROOT + model_name)
+tfidf_train = load_model(MODEL_ROOT + 'tifidf_trained.pkl')
+
+print('done loading models')
 
 # Python code to connect to Postgres
-user = 'postgres'  #'melissaferrari'  # add your Postgres username here
+user = 'postgres'  # 'melissaferrari'  # add your Postgres username here
 # host = '/run/postgresql/' #'localhost'
 host = 'localhost'
 dbname = 'congressional_bills'
-#db = create_engine('postgres://%s%s/%s' % (user, host, dbname))
-#con = None
-con = psycopg2.connect(database=dbname, user=user, host=host, password='password')# , port=5433) # host="/var/run/postgresql/" ,password='postgres')
-
-
+con = psycopg2.connect(database=dbname, user=user, host=host,
+                       password='password')
 
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
     return render_template("bill_search.html",)
+
 
 @app.route('/output', methods=['GET'])
 def bills_output():
@@ -30,40 +42,13 @@ def bills_output():
     bill_id = request.args.get('bill_id')
     print('BILL ID = {}'.format(bill_id))
 
-    # just select the bill from the database
-    q_info = """
-             SELECT bill_id, official_title, subjects_top_term
-             FROM bills WHERE bill_id='%s';
-             """
-    print(q_info)
-    q_text = """
-             SELECT bill_ix, text FROM bill_text bt
-             INNER JOIN bills b ON bt.bill_ix = b.id WHERE b.bill_id='%s';
-             """
+    bill_df = retrieve_data(con, bill_id=bill_id, subject=None)
 
-    q_info_results = pd.read_sql_query(q_info % (bill_id,), con)
-    q_text_results = pd.read_sql_query(q_text % (bill_id,), con)
-
-    if len(q_text_results) == 0:
-        raise Exception('Oh no! This bill is not in the database.')
-
-    if len(q_text_results) > 1:
-        rank_codes = ['ENR', 'EAS', 'EAH', 'RS', 'ES',
-                      'PCS', 'EH', 'RH', 'IS', 'IH']
-        code = next(i for i in rank_codes if i in
-                    q_text_results['code'].unique())
-        q_text_results = q_text_results[q_text_results['code'] == code]
-
-    info_dict = q_info_results.loc[0].to_dict()
-    text_dict = q_text_results.loc[0].to_dict()
-
-    string_xml = text_dict['text']
-    summarization_result = models.do_summarization(string_xml)
+    X, info_dict = apply_model(bill_df, bill_id, tfidf_train, current_model)
 
     return render_template("output.html",
-                           summarization_result=summarization_result,
-                           bill_info=info_dict,
-                           bill_text=text_dict,)
+                           summarization_result=X,
+                           bill_info=info_dict)
 
 
 @app.route('/api/bills/id/<bill_id>', methods=['GET'])
@@ -94,6 +79,7 @@ def get_bills_by_subject(subject):
     output_list = list(query_results['subjects_top_term'].values)
     print(output_list)
     return jsonify(output_list)
+
 
 @app.route('/db_fancy')
 def bills_page_fancy():

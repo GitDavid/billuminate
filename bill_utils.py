@@ -50,7 +50,7 @@ def _return_correct_version(df_bills,
         return df_bills
 
 
-def retrieve_data(engine, subject=None):
+def retrieve_data(engine, bill_id=None, subject=None):
 
     query = """
             SELECT
@@ -78,6 +78,11 @@ def retrieve_data(engine, subject=None):
             ON sm.bill_ix=bi.id
             ;
             """
+    if bill_id:
+        bill_id_query = """
+                        WHERE bi.bill_id='%s';
+                        """
+        query = query[:query.find(';')] + bill_id_query % bill_id
 
     if subject:
         print('Queries limited to subject: {}'.format(subject))
