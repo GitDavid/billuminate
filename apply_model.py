@@ -49,7 +49,7 @@ def get_bill_dict(bills_info, bill_id):
     return bill
 
 
-def apply_model(bills_info, bill_id, tfidf_train, model):
+def apply_model(bills_info, bill_id, model=None, tfidf_train=None):
 
     bill = get_bill_dict(bills_info, bill_id)
 

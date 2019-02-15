@@ -15,7 +15,7 @@ NLP_MODEL_ROOT = '../../nlp_models/'
 MODEL_ROOT = '/Users/melissaferrari/Projects/repo/bill-summarization/models/'
 
 print('loading models')
-nlp = spacy.load(NLP_MODEL_ROOT + 'en_core_web_lg')
+#nlp = spacy.load(NLP_MODEL_ROOT + 'en_core_web_lg')
 model_name = 'over_RandomForestClassifier_on_health_nestimators100_random_state0.pkl'
 current_model = load_model(MODEL_ROOT + model_name)
 tfidf_train = load_model(MODEL_ROOT + 'tifidf_trained.pkl')
@@ -44,10 +44,12 @@ def bills_output():
 
     bill_df = retrieve_data(con, bill_id=bill_id, subject=None)
 
-    X, info_dict = apply_model(bill_df, bill_id, tfidf_train, current_model)
+    X, info_dict = apply_model(bill_df, bill_id, model=current_model)
+
+    pred_results = X[(X.prediction == 1) | (X.tag == 'section')].copy()
 
     return render_template("output.html",
-                           summarization_result=X,
+                           summarization_result=pred_results[['tag', 'tag_rank', 'text']],
                            bill_info=info_dict)
 
 

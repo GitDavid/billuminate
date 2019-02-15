@@ -110,7 +110,16 @@
             <br>
             <br> 
           <p class="lead text-justify" style="font-size:120%;">
-            {{summarization_result}}
+        
+          {% for _, row in summarization_result.iterrows() %}
+          {% if row["tag"] == "section" %}
+           <b>{{ row["text"] }}</b><br>
+          {% else %}
+            {{ row["text"] }} <br>
+           {% endif %}
+     
+       {% endfor %}
+
           </p>
         </div>
       </div>
