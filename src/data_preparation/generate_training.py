@@ -10,12 +10,11 @@ import spacy
 import sqlalchemy
 import text_utils
 import tqdm
-import training_utils
 
 TRAINING_DATA_ROOT = '../../data/training_data/'
 
 
-def aggregate_training_data(bills_df, version,
+def aggregate_training_data(bills_df,
                             word_embeddings, embedding_size, nlp):
 
     all_text_data = pd.DataFrame()
@@ -36,60 +35,10 @@ def aggregate_training_data(bills_df, version,
             bill = bills_df[(bills_df['bill_id'] == bill_id)].copy()
             bill = bill_utils._return_correct_bill_version(bill, as_dict=True)
 
-            short_title = bill['short_title']
-            full_string = bill['full_text']
-            summ_string = bill['summary_text']
-
-            full_string = bill['full_text']
-            full_txt, fsents = bill_utils.get_clean_text(full_string,
-                                                         text_type='full_text')
-
-            full_txt['bill_id'] = bill_id
-            full_txt['clean_text'] = fsents
-
-            locs = full_txt['loc_ix']
-            full_txt['abs_loc'] = (locs - locs.min()).values
-            full_txt['norm_loc'] = (np.divide(locs - locs.min(),
-                                              locs.max() - locs.min())).values
-
-            fvecs = text_utils._calc_embeddings_set(fsents,
-                                                    word_embeddings,
-                                                    embedding_size)
-
-            sum_df, ssents = bill_utils.get_clean_text(summ_string,
-                                                       text_type='summary',
-                                                       short_title=short_title,
-                                                       nlp=nlp)
-
-            sum_df['bill_id'] = bill_id
-            sum_df['clean_text'] = ssents
-
-            svecs = text_utils._calc_embeddings_set(ssents,
-                                                    word_embeddings,
-                                                    embedding_size)
-
-            label_df, ix_match = training_utils.label_important(fvecs, svecs,
-                                                                embedding_size,
-                                                                max_sim=0.5)
-
-            summ_data = pd.DataFrame(svecs, columns=['embed_{:03}'.format(i)
-                                     for i in range(embedding_size)])
-
-            summ_data = summ_data.reset_index()
-            summ_data = summ_data.rename(columns={'index': 'loc_ix'})
-
-            summ_data['in_summary'] = 2
-            summ_data['bill_id'] = bill_id
-
-            label_df = label_df.reset_index()
-            label_df = label_df.rename(columns={'index': 'loc_ix'})
-            label_df['bill_id'] = bill_id
-
-            embed_data = pd.concat([label_df, summ_data], sort=False)
-
-            assert(len(label_df[label_df['in_summary'] != 1]) +
-                   len(label_df[label_df['in_summary'] == 1]) ==
-                   len(label_df))
+            get_data = bill_utils.generate_bill_data(bill, word_embeddings,
+                                                     embedding_size, nlp,
+                                                     train=True)
+            label_df, embed_data, full_txt, sum_df = get_data
 
             all_labeled = all_labeled.append(label_df)
             all_embed_data = all_embed_data.append(embed_data)

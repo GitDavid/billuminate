@@ -6,6 +6,7 @@ import numpy as np
 
 import pandas as pd
 import text_utils
+import training_utils
 
 
 def get_bill(df, bill_id):
@@ -312,3 +313,101 @@ def get_clean_text(text_string, text_type, short_title=None, nlp=None):
         full_sents = text_utils._apply_text_cleaning(full_sents)
 
         return txt_df, full_sents
+
+
+def _describe_full_text(full_string, bill_id, get_vecs=False,
+                        word_embeddings=None, embedding_size=None):
+
+    full_txt, fsents = get_clean_text(full_string,
+                                      text_type='full_text')
+
+    full_txt['bill_id'] = bill_id
+    full_txt['clean_text'] = fsents
+
+    locs = full_txt['loc_ix']
+    full_txt['abs_loc'] = (locs - locs.min()).values
+    full_txt['norm_loc'] = (np.divide(locs - locs.min(),
+                                      locs.max() - locs.min())).values
+
+    if get_vecs:
+        assert all(x for x in [word_embeddings, embedding_size])
+        fvecs = text_utils._calc_embeddings_set(fsents,
+                                                word_embeddings,
+                                                embedding_size)
+        return full_txt, fvecs
+
+    else:
+        return full_txt
+
+
+def _describe_summ_text(summ_string, bill_id, short_title,
+                        word_embeddings, embedding_size, nlp):
+    sum_df, ssents = get_clean_text(summ_string,
+                                    text_type='summary',
+                                    short_title=short_title,
+                                    nlp=nlp)
+
+    sum_df['bill_id'] = bill_id
+    sum_df['clean_text'] = ssents
+
+    svecs = text_utils._calc_embeddings_set(ssents,
+                                            word_embeddings,
+                                            embedding_size)
+    return sum_df, svecs
+
+
+def generate_bill_data(bill,
+                       word_embeddings=None, embedding_size=None,
+                       nlp=None, train=False,
+                       get_vecs=None):
+
+    short_title = bill['short_title']
+    full_string = bill['full_text']
+    bill_id = bill['bill_id']
+
+    if not train:
+        if not get_vecs:
+            full_txt = _describe_full_text(full_string, bill_id)
+            return full_txt
+
+        else:
+            full_txt, fvecs = _describe_full_text(full_string, bill_id,
+                                                  word_embeddings,
+                                                  embedding_size,
+                                                  get_vecs=True)
+            return full_txt, fvecs
+
+    if train:
+        assert nlp
+        summ_string = bill['summary_text']
+
+        sum_df, svecs = _describe_summ_text(summ_string, bill_id,
+                                            short_title,
+                                            word_embeddings,
+                                            embedding_size, nlp)
+
+        label_df, ix_match = training_utils.label_important(fvecs, svecs,
+                                                            embedding_size,
+                                                            max_sim=0.5)
+
+        summ_data = pd.DataFrame(svecs,
+                                 columns=['embed_{:03}'.format(i)
+                                          for i in range(embedding_size)])
+
+        summ_data = summ_data.reset_index()
+        summ_data = summ_data.rename(columns={'index': 'loc_ix'})
+
+        summ_data['in_summary'] = 2
+        summ_data['bill_id'] = bill_id
+
+        label_df = label_df.reset_index()
+        label_df = label_df.rename(columns={'index': 'loc_ix'})
+        label_df['bill_id'] = bill_id
+
+        embed_data = pd.concat([label_df, summ_data], sort=False)
+
+        assert(len(label_df[label_df['in_summary'] != 1]) +
+               len(label_df[label_df['in_summary'] == 1]) ==
+               len(label_df))
+
+        return label_df, embed_data, full_txt, sum_df

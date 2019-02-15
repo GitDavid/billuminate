@@ -32,12 +32,12 @@ def train_basic_classifier(classifier,
     return classifier
 
 
-def feature_preparation(X_match, df_match_):
-    # all_feat = sparse.hstack([X_match.drop(columns=['bill_id']), tfidf_mat,  ])
-    # feat_array = all_feat.toarray()
-    feat_array = np.hstack([X_match.drop(columns=['bill_id']), df_match_])
-    feat_array_ = np.nan_to_num(feat_array)
-    return feat_array_
+# def feature_preparation(X_match, df_match_):
+#     # all_feat = sparse.hstack([X_match.drop(columns=['bill_id']), tfidf_mat,  ])
+#     # feat_array = all_feat.toarray()
+#     feat_array = np.hstack([X_match.drop(columns=['bill_id']), df_match_])
+#     feat_array_ = np.nan_to_num(feat_array)
+#     return feat_array_
 
 
 # def custom_pipelines(MeanEmbeddingVectorizer, embeddings):

@@ -1,6 +1,9 @@
 from scipy import sparse
 import os
 import numpy as np
+import feature_utils
+import bill_utils
+import pickle
 
 
 TRAINING_DATA_ROOT = '../../data/training_data/'
@@ -19,7 +22,13 @@ def load_trained_tfidf(file_path=None, subject='health'):
     return tfidf_train
 
 
-def apply_tfidf(text_col, tfidf_train):
+def load_model(model_save_path):
+    with open(model_save_path, 'rb') as training_model:
+        model = pickle.load(training_model)
+    return model
+
+
+def _apply_tfidf(text_col, tfidf_train):
 
     tfidf = tfidf_train.fit(text_col)
 
@@ -37,16 +46,47 @@ def join_features(feature_list):
     return all_features
 
 
-def main(df):
+def get_bill_dict(bills_info, bill_id):
+    bill = bills_info[bills_info['bill_id'] == bill_id].copy()
+    bill = bill_utils._return_correct_bill_version(bill, as_dict=True)
+    return bill
 
+
+def apply_model(bills_info, bill_id, tfidf_train, model):
+
+    bill = get_bill_dict(bills_info, bill_id)
+
+    X = feature_utils.prepare_features(bill)
+    feature_list = [X.drop(columns=['loc_ix', 'tag', 'text',
+                                    'clean_text', 'bill_id'])]
+
+    tfidf_mat = _apply_tfidf(X['clean_text'], tfidf_train)
+
+    feature_list = feature_list.append(tfidf_mat)
+    X_numeric = join_features(feature_list)
+
+    y_pred = model.predict(X_numeric)
+
+    X['prediction'] = y_pred
+
+    return X
+
+
+def render_final_text(X):
+
+    # true_vals = X[X['prediction'] == 1].copy()
+    prediction_results = X[(X.prediction == 1) | (X.tag == 'section')].copy()
+
+    for ix, row in pred_results.iterrows():
+        print(row['abs_loc'], row['tag'], int(row['tag_rank']))
+        print(row['text'])
+        print()
+
+
+def main():
+    model = load_model(os.path.join(MODEL_ROUTE + ''))
     tfidf_train = load_trained_tfidf(file_path=None, subject='health')
-
-    tfidf_mat = apply_tfidf(df['clean_text'], tfidf_train)
-
-    feature_list = [tfidf_mat, X_match.drop(columns=['bill_id'])]
-
-
-
+    
 
 if __name__ == "__main__":
     main()

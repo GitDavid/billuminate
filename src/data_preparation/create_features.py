@@ -7,12 +7,15 @@ import pandas as pd
 import sqlalchemy
 import datetime
 
+import feature_utils
 import bill_utils
+import tqdm
 
 TRAINING_DATA_ROOT = '../../data/training_data/'
 
 
-def aggregate_feature_data(features_df, train_df, bills_info):
+def aggregate_feature_data(features_df, train_df, bills_info,
+                           word_embeddings, embedding_size):
 
     all_X = pd.DataFrame()
     all_y = pd.DataFrame()
@@ -20,43 +23,47 @@ def aggregate_feature_data(features_df, train_df, bills_info):
     unique_bills = features_df.bill_id.unique()
     train_df = train_df[train_df.bill_id.isin(unique_bills)].copy()
 
-    for bill_id in unique_bills:
-        feat_df = features_df[(features_df['bill_id'] == bill_id)].copy()
+    for bill_id in tqdm.tqdm(unique_bills):
+        try:
+            feature_df = features_df[(
+                features_df['bill_id'] == bill_id)].copy()
 
-        bill = bills_info[bills_info['bill_id'] == bill_id].copy()
-        bill = bill_utils._return_correct_bill_version(bill, as_dict=True)
+            bill = bills_info[bills_info['bill_id'] == bill_id].copy()
+            bill = bill_utils._return_correct_bill_version(bill, as_dict=True)
 
-        official_title = bill['official_title'].lower()
-        short_title = bill['short_title'].lower()
-        joint_title = official_title + short_title
+            official_title = bill['official_title'].lower()
+            short_title = bill['short_title'].lower()
+            joint_title = official_title + short_title
 
-        feat_df['clean_text'] = feat_df['clean_text'].fillna("")
+            get_data = bill_utils.generate_bill_data(bill, word_embeddings,
+                                                     embedding_size,
+                                                     train=True)
+            full_txt, fvecs = get_data
 
-        feat_df['title_word_count'] = feat_df['clean_text'].apply(
-            lambda x: len([wrd for wrd in x.split() if wrd in joint_title]))
+            feat_data = feature_utils.feature_generators(
+                feature_df, joint_title=joint_title)
 
-        feat_df['char_count'] = feat_df['clean_text'].apply(len)
-        feat_df['word_count'] = feat_df['clean_text'].apply(
-            lambda x: len(x.split()))
-        feat_df['word_density'] = np.divide(feat_df['char_count'],
-                                            (feat_df['word_count'] + 1))
+            feature_df, feature_list = feat_data
+            embeds_df = train_df[train_df.bill_id == bill_id].copy()
+            y = embeds_df[['bill_id', 'in_summary']]
 
-        embeds_df = train_df[train_df.bill_id == bill_id].copy()
-        y = embeds_df[['bill_id', 'in_summary']]
+            feature_df_cols = ['tag_rank', 'abs_loc', 'norm_loc']
+            feature_df_cols.extend(feature_list)
 
-        feat = feat_df[['tag_rank', 'abs_loc', 'norm_loc',  'title_word_count',
-                        'char_count', 'word_count', 'word_density']]
-        feat = feat.reset_index(drop=True).merge(y.reset_index(drop=True),
-                                                 left_index=True,
-                                                 right_index=True)
+            feature_df = feature_df[feature_df_cols]
 
-        X = feat.drop(columns=['in_summary'])
+            feature_df = feature_df.reset_index(drop=True).merge(
+                y.reset_index(drop=True), left_index=True, right_index=True)
 
-        X = X.set_index('bill_id')
-        y = y.set_index('bill_id')
+            X = feature_df.drop(columns=['in_summary'])
 
-        all_X = all_X.append(X)
-        all_y = all_y.append(y)
+            X = X.set_index('bill_id')
+            y = y.set_index('bill_id')
+
+            all_X = all_X.append(X)
+            all_y = all_y.append(y)
+        except TypeError:
+            print('{} failed'.format(bill_id))
 
     return all_X, all_y
 
