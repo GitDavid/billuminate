@@ -1,5 +1,9 @@
 import sys
-sys.path.append('/home/ubuntu/repo/billuminate/src/')
+if sys.platform == "linux":
+    sys.path.append('/home/ubuntu/repo/billuminate/src/')
+elif sys.platform == "darwin":
+    sys.path.append('/Users/melissaferrari/Projects/repo/billuminate/src/')
+
 
 from scipy import sparse
 import os
@@ -48,7 +52,7 @@ def join_features(feature_list):
 
 def get_bill_dict(bills_info, bill_id):
     bill = bills_info[bills_info['bill_id'] == bill_id].copy()
-    bill = bill_utils._return_correct_bill_version(bill, as_dict=True)
+    bill = bill_utils._return_correct_version(bill, as_dict=True)
     return bill
 
 

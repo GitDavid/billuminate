@@ -1,5 +1,6 @@
 # Melissa added
 data/
+notebooks/
 resources/
 nlp_models
 training_checkpoints/

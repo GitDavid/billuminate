@@ -1,4 +1,9 @@
 import sys
+if sys.platform == "linux":
+    sys.path.append('/home/ubuntu/repo/billuminate/src/')
+elif sys.platform == "darwin":
+    sys.path.append('/Users/melissaferrari/Projects/repo/billuminate/src/')
+
 
 import numpy as np
 import pandas as pd
@@ -7,8 +12,7 @@ from lxml import etree
 import numpy as np
 from gensim import summarization
 
-from feature_utils import prepare_features
-import bill_utils
+from data_preparation import feature_utils,  bill_utils
 
 
 def create_single_text_string(tree, tag='text'):

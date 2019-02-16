@@ -1,10 +1,21 @@
 import sys
-sys.path.append('/home/ubuntu/repo/billuminate/src/')
+if sys.platform == "linux":
+    sys.path.append('/home/ubuntu/repo/billuminate/src/')
+
+    MODEL_ROOT = '/home/ubuntu/insight/bill-summarization/models/'
+    NLP_MODEL_ROOT = '/home/ubuntu/insight/bill-summarization/nlp_models/'
+
+elif sys.platform == "darwin":
+    sys.path.append('/Users/melissaferrari/Projects/repo/billuminate/src/')
+
+    MODEL_ROOT = '../../models/'
+    NLP_MODEL_ROOT = '../../nlp_models/'
+
 from flask import render_template, request, jsonify  # Response
 from bill_app import app
 import pandas as pd
 import psycopg2
-from bill_app import models  # feature_utils, bill_utils, apply_model
+# from bill_app import models  # feature_utils, bill_utils, apply_model
 import json
 from wtforms import TextField, Form
 from modeling import model_utils
@@ -12,16 +23,11 @@ from data_preparation import bill_utils
 import spacy
 
 
-MODEL_ROOT = '../../models/'
-NLP_MODEL_ROOT = '../../nlp_models/'
-MODEL_ROOT = '/home/ubuntu/insight/bill-summarization/models/'
-#'/Users/melissaferrari/Projects/repo/bill-summarization/models/'
-
 print('loading models')
 #nlp = spacy.load(NLP_MODEL_ROOT + 'en_core_web_lg')
 model_name = 'over_RandomForestClassifier_on_health_nestimators100_random_state0.pkl'
-current_model = load_model(MODEL_ROOT + model_name)
-tfidf_train = load_model(MODEL_ROOT + 'tifidf_trained.pkl')
+current_model = model_utils.load_model(MODEL_ROOT + model_name)
+tfidf_train = model_utils.load_model(MODEL_ROOT + 'tifidf_trained.pkl')
 
 print('done loading models')
 
@@ -45,9 +51,9 @@ def bills_output():
     bill_id = request.args.get('bill_id')
     print('BILL ID = {}'.format(bill_id))
 
-    bill_df = retrieve_data(con, bill_id=bill_id, subject=None)
+    bill_df = bill_utils.retrieve_data(con, bill_id=bill_id, subject=None)
 
-    X, info_dict = apply_model(bill_df, bill_id, model=current_model)
+    X, info_dict = model_utils.apply_model(bill_df, bill_id, model=current_model)
 
     pred_results = X[(X.prediction == 1) | (X.tag == 'section')].copy()
 
