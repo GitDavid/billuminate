@@ -1,3 +1,5 @@
+import sys
+sys.path.append('/home/ubuntu/repo/billuminate/src/')
 from flask import render_template, request, jsonify  # Response
 from bill_app import app
 import pandas as pd
@@ -5,8 +7,8 @@ import psycopg2
 from bill_app import models  # feature_utils, bill_utils, apply_model
 import json
 from wtforms import TextField, Form
-from apply_model import load_model, apply_model
-from bill_utils import retrieve_data
+from modeling import model_utils
+from data_preparation import bill_utils
 import spacy
 
 

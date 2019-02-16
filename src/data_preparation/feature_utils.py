@@ -1,6 +1,9 @@
+import sys
+sys.path.append('/home/ubuntu/repo/billuminate/src/')
+
 import numpy as np
 
-import bill_utils
+from data_preparation import bill_utils
 import pandas as pd
 import pickle
 

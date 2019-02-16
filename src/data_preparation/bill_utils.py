@@ -1,12 +1,14 @@
+import sys
+sys.path.append('/home/ubuntu/repo/billuminate/src/')
+
 import os
 import re
 import xml.etree.ElementTree as ET
 
 import numpy as np
-
 import pandas as pd
-import text_utils
-import training_utils
+
+from data_preparation import text_utils, training_utils
 
 
 def get_bill(df, bill_id):

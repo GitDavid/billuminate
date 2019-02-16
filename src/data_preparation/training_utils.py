@@ -1,7 +1,10 @@
+import sys
+sys.path.append('/home/ubuntu/repo/billuminate/src/')
+
 import numpy as np
 
 import pandas as pd
-import text_utils
+from data_preparation import text_utils
 
 
 def label_important(full_vec, summ_vec, embedding_size,

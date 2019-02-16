@@ -1,8 +1,10 @@
+import sys
+sys.path.append('/home/ubuntu/repo/billuminate/src/')
+
 from scipy import sparse
 import os
 import numpy as np
-import feature_utils
-import bill_utils
+from data_preparation import feature_utils, bill_utils
 import pickle
 
 

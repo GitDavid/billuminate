@@ -9,7 +9,7 @@ import pandas as pd
 from scipy import sparse
 from sklearn.feature_extraction.text import (CountVectorizer,
                                              # HashingVectorizer,
-                                             TfidfEmbeddingVectorizer,
+                                             TfidfVectorizer,
                                              TfidfTransformer)
 from sklearn.linear_model import LogisticRegression, SGDClassifier
 from sklearn.metrics import (classification_report,

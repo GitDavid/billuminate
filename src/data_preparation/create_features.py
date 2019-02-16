@@ -1,3 +1,6 @@
+import sys
+sys.path.append('/home/ubuntu/repo/billuminate/src/')
+
 import os
 import time
 
@@ -7,8 +10,7 @@ import pandas as pd
 import sqlalchemy
 import datetime
 
-import feature_utils
-import bill_utils
+from data_preparation import feature_utils, bill_utils
 import tqdm
 
 TRAINING_DATA_ROOT = '../../data/training_data/'
