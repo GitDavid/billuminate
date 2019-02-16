@@ -1,3 +1,10 @@
+# Melissa added
+data/
+resources/
+nlp_models
+training_checkpoints/
+.vsccode/*
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
