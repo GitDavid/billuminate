@@ -7,7 +7,7 @@ import pickle
 
 
 TRAINING_DATA_ROOT = '../../data/training_data/'
-MODEL_ROUTE = '../../models/'
+MODEL_ROOT = '../../models/'
 NLP_MODEL_ROOT = '../../nlp_models/'
 
 
@@ -29,9 +29,7 @@ def load_model(model_save_path):
 
 
 def _apply_tfidf(text_col, tfidf_train):
-
-    tfidf = tfidf_train.fit(text_col)
-
+    tfidf = tfidf_train.transform(text_col)
     return tfidf
 
 
@@ -52,41 +50,35 @@ def get_bill_dict(bills_info, bill_id):
     return bill
 
 
-def apply_model(bills_info, bill_id, tfidf_train, model):
+def apply_model(bills_info, bill_id, model=None, tfidf_train=None):
 
     bill = get_bill_dict(bills_info, bill_id)
 
     X = feature_utils.prepare_features(bill)
-    feature_list = [X.drop(columns=['loc_ix', 'tag', 'text',
-                                    'clean_text', 'bill_id'])]
+    print(X.shape)
+    features = X.drop(columns=['loc_ix', 'tag', 'text',
+                               'clean_text', 'bill_id'])
 
-    tfidf_mat = _apply_tfidf(X['clean_text'], tfidf_train)
+    feature_list = [features, ]
+    if tfidf_train:
+        tfidf_mat = tfidf_train.transform(X['clean_text'])
+        feature_list.append(tfidf_mat)
 
-    feature_list = feature_list.append(tfidf_mat)
     X_numeric = join_features(feature_list)
 
+    assert X_numeric.shape[1] == model.n_features_
     y_pred = model.predict(X_numeric)
 
     X['prediction'] = y_pred
 
-    return X
+    return X, bill
 
 
 def render_final_text(X):
 
-    # true_vals = X[X['prediction'] == 1].copy()
-    prediction_results = X[(X.prediction == 1) | (X.tag == 'section')].copy()
+    pred_results = X[(X.prediction == 1) | (X.tag == 'section')].copy()
 
     for ix, row in pred_results.iterrows():
         print(row['abs_loc'], row['tag'], int(row['tag_rank']))
         print(row['text'])
         print()
-
-
-def main():
-    model = load_model(os.path.join(MODEL_ROUTE + ''))
-    tfidf_train = load_trained_tfidf(file_path=None, subject='health')
-    
-
-if __name__ == "__main__":
-    main()

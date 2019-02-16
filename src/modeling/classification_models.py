@@ -20,7 +20,7 @@ from sklearn.pipeline import Pipeline
 
 
 TRAINING_DATA_ROOT = '../../data/training_data/'
-MODEL_ROUTE = '../../models/'
+NLP_MODEL_ROOT = '../../models/'
 NLP_MODEL_ROOT = '../../nlp_models/'
 
 
