@@ -2,8 +2,8 @@ import sys
 if sys.platform == "linux":
     sys.path.append('/home/ubuntu/repo/billuminate/src/')
 
-    MODEL_ROOT = '/home/ubuntu/insight/bill-summarization/models/'
-    NLP_MODEL_ROOT = '/home/ubuntu/insight/bill-summarization/nlp_models/'
+    MODEL_ROOT = '/home/ubuntu/repo/billuminate/models/'
+    NLP_MODEL_ROOT = '/home/ubuntu/repo/billuminate/nlp_models/'
 
 elif sys.platform == "darwin":
     sys.path.append('/Users/melissaferrari/Projects/repo/billuminate/src/')
