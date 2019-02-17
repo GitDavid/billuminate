@@ -7,7 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta name="description" content="bill-summarizing-app">
     <meta name="author" content="melissa-ferrari">
-    <!-- Do I need this? https://www.w3.org/2005/10/howto-favicon <link rel="icon" href="../../favicon.ico"> -->
+    <link rel="icon" href="../static/css/favicon.ico">
 
     <title>Congressional Bill Summarizing</title>
 
@@ -22,6 +22,95 @@
     <link href="../static/css/bootstrap-slider.css" rel="stylesheet">
     <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
     <!-- <script src="../../assets/js/ie10-viewport-bug-workaround.js"></script> -->
+
+
+
+    <!-- AUTOCOMPLETE BILL FIELD -->
+    <script src="../static/js/jquery-3.3.1.min.js"></script>
+    <script src="../static/js/bootstrap.min.js"></script>
+    <script src="../static/js/jquery-ui.min.js"></script>
+    <script src="../static/js/bootstrap-slider.js"></script>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const bill_id_current = urlParams.get('bill_id');
+        const bill_title_current = urlParams.get('bill_title');
+        const reading_time_current = urlParams.get('reading_time');
+
+
+        $(function () {
+
+            if (bill_id_current) {
+                $('#bill_autocomplete').val(bill_id_current);
+            }
+            if (bill_title_current) {
+                $('#bill_title_autocomplete').val(bill_title_current);
+            }
+
+            $('#clear_btn').click(function (e) {
+                e.preventDefault();
+                $('#bill_autocomplete').val('');
+                $('#bill_title_autocomplete').val('');
+                $('#time_slider').bootstrapSlider('setValue', 5);
+            });
+
+            $("#bill_autocomplete").autocomplete({
+                source: function (request, response) {
+                    $.ajax({
+                        url: '/api/bills/id/' + request.term,
+                        dataType: "json",
+                        success: function (data) {
+                            response(data);
+                        }
+                    });
+                },
+                minLength: 2
+            });
+
+            $("#bill_title_autocomplete").autocomplete({
+                source: function (request, response) {
+                    $.ajax({
+                        url: '/api/bills/title/' + request.term,
+                        dataType: "json",
+                        success: function (data) {
+                            response(data);
+                        }
+                    });
+                },
+                minLength: 2
+            });
+
+            $("#bill_subject_autocomplete").autocomplete({
+                source: function (request, response) {
+                    $.ajax({
+                        url: '/api/bills/subject/' + request.term,
+                        dataType: "json",
+                        success: function (data) {
+                            response(data);
+                        }
+                    });
+                },
+                minLength: 2
+            });
+
+            $('#time_slider').bootstrapSlider({
+                formatter: function (value) {
+                    return 'Current value: ' + value;
+                }
+            });
+
+            $("#time_slider").on("slide", function (slideEvt) {
+                $("#ex6SliderVal").text(slideEvt.value);
+            });
+
+            if (reading_time_current) {
+                $('#time_slider').bootstrapSlider('setValue', reading_time_current);
+                $("#ex6SliderVal").text(reading_time_current);
+            }
+        });
+
+    </script>
+
 
 </head>
 
@@ -56,6 +145,58 @@
     <!-- INSERT BODY -->
 
     <section id="page_body">
+        <div class="container">
+            <div class="row form-group" style="padding-top:50px; padding-bottom:50px;">
+                <form action="/output" method="GET" method="POST" role="form">
+                    <div id="header-search" class="form-group row">
+                        <div class="col-md-2 form-group" style="align-content: center;">
+
+                            <label for="bill_autocomplete" class="control-label">
+                                <p class="lead"> Search by Bill ID</p>
+                            </label>
+                            <br>
+                            <input id="bill_autocomplete" name="bill_id" type="text" value=""
+                                class="ui-autocomplete-input form-control">
+                        </div>
+                        <div class="col-md-3 form-group" style="align-content: center;">
+                            <label for="bill_title_autocomplete" class="control-label">
+                                <p class="lead">Search by Title</p>
+                            </label>
+                            <br>
+                            <input id="bill_title_autocomplete" name="bill_title" type="text" value=""
+                                class="ui-autocomplete-input form-control">
+                        </div>
+
+                        <div class="col-md-3 form-group" style="align-content: center;">
+                            <div class="slider slider-horizontal" style="width: fit-content;">
+                                <div class="slider-track">
+                                    <div class="slider-selection" style="left: 0%; width: 50%;">
+                                    </div>
+                                </div>
+                                <div class="tooltip top" style="top: -40px; left: 23px;">
+                                    <div class="tooltip-arrow">
+                                    </div>
+                                    <div class="tooltip-inner">Current value: 5</div>
+                                </div>
+                                <input type="text" class="span2 form-control" value="4" id="time_slider" name="reading_time">
+                                <span id="ex6CurrentSliderValLabel">
+                                    <p>
+                                        Read Time: <span id="ex6SliderVal">3</span> minutes
+                                    </p>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-default btn-lg">Summarize this Bill!</button>
+                        </div>
+                        <div class="col-md-2">
+                            <button id="clear_btn" class="btn btn-default btn-lg">Find Another</button>
+                        </div>
+                </form>
+            </div>
+        </div>
+
+
 
         {% block content %}
         {% endblock %}
