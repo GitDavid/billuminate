@@ -45,10 +45,11 @@ def aggregate_feature_data(features_df, train_df, bills_info,
             short_title = bill['short_title'].lower()
             joint_title = official_title + short_title
             #print(bill.keys())
-            #get_data = bill_utils.generate_bill_data(bill, word_embeddings=None,
-             #                                        embedding_size=None,
-              #                                       train=False, get_vecs=False)
-            #full_txt = get_data
+            if not train:
+                get_data = bill_utils.generate_bill_data(bill, word_embeddings=None,
+                                                        embedding_size=None,
+                                                        train=False, get_vecs=False)
+                full_txt = get_data
             #pdb.set_trace()
             feat_data = feature_utils.feature_generators(
                 feature_df, joint_title=joint_title)

@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+
+<div class="container">
+    <div class="row col-md-12">
+        <div class="row text-center">
+            <div class="col-md-12">
+
+                <div class="panel panel-danger">
+                    <div class="panel-heading">
+                        <h3>Cannot find bill "{{ bill_id }}"</h3>
+                    </div>
+                    <div class="panel-body">
+                        <div class="row" style="align-content: center">
+                            <p class="lead">
+                                There may be a typo or I am having difficulties accesing it. <br>
+                                Please go to <a href="https://www.congress.gov/">CONGRESS.GOV</a>
+                                and to provide XML link the the bill you were hoping to summarize. <br>
+                            </p>
+                        </div>
+                        <div class="row" style="align-content: center">
+
+                            <form action="/" method="GET" method="POST" role="form">
+                                <div class="form-group" style="align-content: center">
+                                    <input id="paste_xml" class="form-control" name="xml_url" type="text" value="">
+                                    <br><br>
+                                </div>
+                                <div>
+                                    <button type="submit" class="btn btn-default btn-lg">Summarize this Bill!</button>
+                                </div>
+                            </form>
+                        </div>
+                        <!-- <div class="row">
+                            Instructions:
+                        </div> -->
+                    </div>
+
+
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+{% endblock %}

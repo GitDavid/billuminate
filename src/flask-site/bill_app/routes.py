@@ -34,28 +34,51 @@ print('done loading models')
 
 
 @app.route('/', methods=['GET', 'POST'])
-def index():
-    return render_template("bill_search.html",)
+# def index():
+#     return render_template("bill_search.html",)
 
-
+@app.route('/', methods=['GET', 'POST'])
 @app.route('/output', methods=['GET'])
 def bills_output():
+    bill_id=None 
+    bill_title=None
 
     bill_id = request.args.get('bill_id')
     print('BILL ID = {}'.format(bill_id))
 
-    read_time = request.args.get('time_slider')
+    bill_title = request.args.get('bill_title')
+    print('BILL Title = {}'.format(bill_title))
+
+    read_time = request.args.get('reading_time')
     print('Read time = {}'.format(read_time))
     
-    bill_df = bill_utils.retrieve_data(con, bill_id=bill_id, subject=None)
+    if any(x for x in [bill_id, bill_title]):   
+        print(bill_title)
+        print(bill_id)
+        bill_df = bill_utils.retrieve_data(con, bill_id=bill_id, bill_title=bill_title, subject=None)
+       
+        if bill_df.empty:
+            return render_template("bill_not_found.html",
+                            bill_id=bill_id,
+                            bill_title =bill_title)
 
-    X, info_dict = model_utils.apply_model(bill_df, bill_id, model=current_model)
+        bill_id = bill_df.bill_id.unique()[0]
+        X, info_dict = model_utils.apply_model(bill_df, bill_id, model=current_model)
 
-    pred_results = X[(X.prediction == 1) | (X.tag == 'section')].copy()
-
-    return render_template("output.html",
-                           summarization_result=pred_results[['tag', 'tag_rank', 'text']],
-                           bill_info=info_dict)
+        pred_results = X[(X.prediction == 1) | (X.tag == 'section')].copy()
+        min_slide_val = 2
+        max_slide_val = 10
+        return render_template("output.html",
+                            summarization_result=pred_results[['tag', 'tag_rank', 'text']],
+                            bill_info=info_dict, 
+                            min_slide_val=min_slide_val,
+                            max_slide_val=max_slide_val)
+    else:
+         return render_template("output.html",
+                            summarization_result=pd.DataFrame(columns=['tag', 'tag_rank', 'text']),
+                            bill_info=None, 
+                            min_slide_val=0,
+                            max_slide_val=20)       
 
 
 @app.route('/api/bills/id/<bill_id>', methods=['GET'])

@@ -5,13 +5,33 @@
 
 <!-- AUTOCOMPLETE BILL FIELD -->
 <script src="../static/js/jquery-3.3.1.min.js"></script>
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
 <script src="../static/js/bootstrap.min.js"></script>
 <script src="../static/js/jquery-ui.min.js"></script>
 <script src="../static/js/bootstrap-slider.js"></script>
 
 <script>
+  const urlParams = new URLSearchParams(window.location.search);
+  const bill_id_current = urlParams.get('bill_id');
+  const bill_title_current = urlParams.get('bill_title');
+  const reading_time_current = urlParams.get('reading_time');
+
+
   $(function () {
+
+    if (bill_id_current) {
+      $('#bill_autocomplete').val(bill_id_current);
+    }
+    if (bill_title_current) {
+      $('#bill_title_autocomplete').val(bill_title_current);
+    }
+
+    $('#clear_btn').click(function (e) {
+      e.preventDefault();
+      $('#bill_autocomplete').val('');
+      $('#bill_title_autocomplete').val('');
+      $('#time_slider').slider('setValue', 5);
+    });
+
     $("#bill_autocomplete").autocomplete({
       source: function (request, response) {
         $.ajax({
@@ -51,13 +71,20 @@
       minLength: 2
     });
 
-    $.Slider = null;
-    $('#time_slider').bootstrapSlider({
+    $('#time_slider').slider({
       formatter: function (value) {
         return 'Current value: ' + value;
       }
     });
 
+    $("#time_slider").on("slide", function(slideEvt) {
+	    $("#ex6SliderVal").text(slideEvt.value);
+    });
+
+    if (reading_time_current) {
+      $('#time_slider').slider('setValue', reading_time_current);
+      $("#ex6SliderVal").text(reading_time_current);
+    }
   });
 
 </script>
@@ -65,23 +92,37 @@
 <div class="container" style="padding-top:50px;">
   <div class="row">
     <form action="/output" method="GET" method="POST" role="form">
-      <div id="header-search" class="form-group col-sm-12 row">
-        <div class="col-md-3">
-          <label for="bill_autocomplete" class="control-label">Bill ID</label>
+      <div id="header-search" class="form-group row">
+        <div class="col-md-2">
+          <label for="bill_autocomplete" class="control-label">Search by Bill ID<br></label>
           <input id="bill_autocomplete" name="bill_id" type="text" value="" class="ui-autocomplete-input">
         </div>
         <div class="col-md-3">
-          <label for="bill_title_autocomplete" class="control-label">Bill Title</label>
+          <label for="bill_title_autocomplete" class="control-label">Search by Title<br></label>
           <input id="bill_title_autocomplete" name="bill_title" type="text" value="" class="ui-autocomplete-input">
         </div>
-        <div class="col-md-3">
-          <label for="bill_subject_autocomplete" class="control-label">Subject</label>
-          <input id="bill_subject_autocomplete" name="bill_subject" type="text" value="" class="ui-autocomplete-input">
+
+        <div class="col-md-3">   
+          <div class="slider slider-horizontal" style="width: fit-content;">
+            <div class="slider-track">
+              <div class="slider-selection" style="left: 0%; width: 50%;">
+              </div>
+            </div>
+            <div class="tooltip top" style="top: -40px; left: 23px;">
+              <div class="tooltip-arrow">
+              </div>
+              <div class="tooltip-inner">Current value: 5</div>
+            </div>
+            <input type="text" class="span2" value="4" id="time_slider" name="reading_time">
+            <span id="ex6CurrentSliderValLabel">Read Time: <span id="ex6SliderVal">3</span></span>
+          </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-2">
           <button type="submit" class="btn btn-default btn-lg">Summarize this Bill!</button>
         </div>
-      </div>
+        <div class="col-md-2">
+            <button id="clear_btn" class="btn btn-default btn-lg">Find Another</button>
+          </div>
     </form>
   </div>
 </div>
@@ -98,34 +139,18 @@
     <!-- MIDDLE COLUMN -->
     <div class="col-md-6" style="align-content: center">
 
-      <div class="row" id="slider">
+      <!-- <div class="row" id="slider">
 
         <form action="/output" method="GET" method="POST" role="form">
 
-          <div class="well well-lg">
-            <div class="col-md-8">
-              <div class="slider slider-horizontal">
-                <div class="slider-track">
-                  <div class="slider-selection" style="left: 0%; width: 100%;">
-                  </div>
-                  <div class="slider-handle round hide" style="left: 0%;">
-                  </div>
-                </div>
-                <div class="tooltip top" style="top: -40px; left: 90px;">
-                  <div class="tooltip-arrow">
-                  </div>
-                  <div class="tooltip-inner">Current value: 10</div>
-                </div>
-                <input type="text" class="span2" value="4" id="time_slider" name="reading_time">
-              </div>
-            </div>
+
             <div class="col-md-4">
               <button type="submit" class="btn btn-primary">Set Reading Time</button>
             </div>
           </div>
         </form>
 
-      </div>
+      </div> -->
 
       <div class="row text-center">
         <div class="col-md-12">

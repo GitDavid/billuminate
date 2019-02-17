@@ -56,11 +56,11 @@ def get_bill_dict(bills_info, bill_id):
     return bill
 
 
-def apply_model(bills_info, bill_id, model=None, tfidf_train=None):
+def apply_model(bills_info, bill_id, model=None, tfidf_train=None, train=False, get_vecs=False):
 
     bill = get_bill_dict(bills_info, bill_id)
 
-    X = feature_utils.prepare_features(bill)
+    X = feature_utils.prepare_features(bill, train=train, get_vecs=get_vecs)
     print(X.shape)
     features = X.drop(columns=['loc_ix', 'tag', 'text',
                                'clean_text', 'bill_id'])

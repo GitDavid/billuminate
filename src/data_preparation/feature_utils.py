@@ -54,14 +54,14 @@ def feature_generators(txt_df, feature_dict=None, joint_title=None):
     return txt_df, feature_list
 
 
-def prepare_features(bill):
+def prepare_features(bill, train=False, get_vecs=False):
 
     official_title = bill['official_title'].lower()
     short_title = bill['short_title'].lower()
     joint_title = official_title + short_title
 
     X = bill_utils.generate_bill_data(bill,
-                                      train=False)
+                                      train=train, get_vecs=get_vecs)
 
     X, feature_list = feature_generators(X,
                                          joint_title=joint_title)

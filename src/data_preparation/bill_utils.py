@@ -57,7 +57,7 @@ def _return_correct_version(df_bills,
         return df_bills
 
 
-def retrieve_data(engine, bill_id=None, subject=None):
+def retrieve_data(engine, bill_id=None, bill_title=None, subject=None):
 
     query = """
             SELECT
@@ -91,6 +91,12 @@ def retrieve_data(engine, bill_id=None, subject=None):
                         """
         query = query[:query.find(';')] + bill_id_query % bill_id
 
+    if bill_title:
+        bill_title_query = """
+                           WHERE bi.official_title='%s';
+                           """
+        query = query[:query.find(';')] + bill_title_query % bill_title
+
     if subject:
         print('Queries limited to subject: {}'.format(subject))
         subject_query = """
@@ -101,6 +107,9 @@ def retrieve_data(engine, bill_id=None, subject=None):
         query = query[:query.find(';')] + subject_query % subject
 
     bill_df = pd.read_sql_query(query, engine)
+
+    if bill_df.empty:
+        return bill_df
 
     # The following code uses two methods to return correct bill.
     bill_df = bill_df.groupby('bill_id', group_keys=False
@@ -391,12 +400,12 @@ def generate_bill_data(bill,
         if not get_vecs:
             full_txt = _describe_full_text(full_string, bill_id)
             return full_txt
-
         else:
             full_txt, fvecs = _describe_full_text(full_string, bill_id,
+                                                  get_vecs,
                                                   word_embeddings,
                                                   embedding_size,
-                                                  get_vecs=True)
+                                                  )
             return full_txt, fvecs
 
     if train:
