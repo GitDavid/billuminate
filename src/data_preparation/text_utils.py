@@ -3,7 +3,7 @@ import re
 import string
 
 import numpy as np
-
+from gensim.models import KeyedVectors
 import nltk
 import pandas as pd
 #import rouge
@@ -63,6 +63,13 @@ def _remove_punct(sentences):
     # remove punctuations and special characters
     regex = re.compile(r"[^a-zA-Z0-9]")
     return [regex.sub(" ", s) for s in sentences]
+
+
+def _tokenize_words(txt_string, nlp):
+    txt_string = txt_string.replace(',', "")
+    doc = nlp(txt_string)
+    txt_words = [sent for sent in doc]
+    return doc, txt_words
 
 
 def _tokenize_sentences(txt_string, nlp):
@@ -143,16 +150,16 @@ def _remove_custom(sentence_list, type='sec'):
 
 def _load_embeddings(path_to_embedding=None, encoding=None):
 
-    if not encoding:
-        encoding = 'utf-8'
+    #if not encoding:
+     #   encoding = 'utf-8'
 
     if not path_to_embedding:
         path_to_embedding = NLP_MODEL_ROOT + 'glove.6B/glove.6B.300d.txt'
 
     # with open(NLP_MODEL_ROOT + 'LeGlove.model', 'rb') as f:
     #     embeddings = pickle.load(f, encoding='latin-1')
-
-    f = open(path_to_embedding, encoding)
+    print(path_to_embedding)
+    f = open(path_to_embedding)#, encoding=encoding)
     word_embeddings = {}
     for line in f:
         values = line.split()
@@ -163,6 +170,23 @@ def _load_embeddings(path_to_embedding=None, encoding=None):
 
     embedding_size = list(coefs.shape)[0]
     return word_embeddings, embedding_size
+
+
+def _load_embeddings_other(path_to_embedding=None, binary=True, encoding='latin-1'):
+
+    if not path_to_embedding:
+        spec_path = 'word2vec-legal/lemmatized-legal/no replacement/legal_lemmatized_no_replacement.bin'
+        path_to_embedding = NLP_MODEL_ROOT + spec_path
+
+    print(path_to_embedding)
+    wmodel = KeyedVectors.load_word2vec_format(path_to_embedding, binary=binary, encoding=encoding)
+    word_embeddings = {}
+    for idx, key in enumerate(wmodel.vocab):
+        word_embeddings[key] = wmodel.get_vector(key)
+   
+    embedding_size = list(word_embeddings[key].shape)[0]
+    return word_embeddings, embedding_size
+
 
 
 def _calc_embedding(sen, word_embeddings, embedding_size=None):
