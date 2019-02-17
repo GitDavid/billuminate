@@ -45,6 +45,7 @@ def label_important(full_vec, summ_vec, embedding_size,
         return labeled_df, sim_mat_mask, mean_importance#, ix_match
     except AttributeError:
         print(len(full_vec), len(summ_vec))
+        pass
 #     if version == 1:
 #         ix_match = text_utils._sort_matrix_ix(sim_mat)
 

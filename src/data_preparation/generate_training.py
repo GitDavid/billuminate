@@ -43,6 +43,7 @@ def aggregate_training_data(bills_df,
     for bill_id in tqdm.tqdm(unique_bills):
         try:
             #print(bill_id)
+            #print(bill_id)
             bill = bills_df[(bills_df['bill_id'] == bill_id)].copy()
             bill = bill_utils._return_correct_version(bill, as_dict=True)
             get_data = bill_utils.generate_bill_data(bill, word_embeddings,
@@ -55,92 +56,117 @@ def aggregate_training_data(bills_df,
             all_text_data = all_text_data.append(full_txt).copy()
             all_sum_text = all_sum_text.append(sum_df).copy()
             num_rows += len(label_df)
-        except AttributeError:
-            print('{} failed'.format(bill_id))
+            #print('The number of rows in the dataset should be {}'.format(num_rows))
+            #return all_labeled, all_embed_data, all_text_data, all_sum_text
 
-    print('The number of rows in the dataset should be {}'.format(num_rows))
-    #return all_labeled, all_embed_data, all_text_data, all_sum_text
+        except:
+            print('{} failed'.format(bill_id))
+            pass
+
     return all_labeled, all_text_data, all_sum_text
 
 
 
 def main():
+    
+    for subject in ['Armed forces and national security', 
+                   'Government operations and politics',
+                   'Taxation']:
+    #for subject in ['Health', 'Education', 'Crime and law enforcement']:
+        TRAINING_DATA_ROOT = '/media/swimmers3/ferrari_06/repo/billuminate/data/training_data/'
+        date = datetime.datetime.today().strftime('%Y%m%d')
 
-    date = datetime.datetime.today().strftime('%Y%m%d')
-
-    # Connect to database
-    dbname = 'congressional_bills'
-    username = 'postgres'
-    password = 'password'
-    engine = sqlalchemy.create_engine('postgres://%s:%s@localhost/%s' %
-                                      (username, password, dbname))
-    print(engine.url)
-
-    subject = 'Health'
-
-    print('Querying data ...')
-    start_time = time.time()
-    bill_df = bill_utils.retrieve_data(engine, subject=subject)
-    print("--- That took {} seconds ---".format(time.time() - start_time))
-
-    nlp_models = ['en_vectors_web_lg', 'en_core_web_lg']
-    nlp_model = nlp_models[1]
-
-    print('Loading NLP model {}'.format(nlp_model))
-    start_time = time.time()
-    #nlp = spacy.load('en_core_web_sm')
-    nlp = spacy.load('en_core_web_lg')
-    print("--- That took {} seconds ---".format(time.time() - start_time))
-
-    embedding_size = 200
-    #path_to_embedding = 'glove.6B/glove.6B.{}d.txt'.format(embedding_size)
-    path_to_embedding = '/media/swimmers3/ferrari_06/repo/billuminate/nlp_models/word2vec-legal/lemmatized-legal/no replacement/legal_lemmatized_no_replacement.bin'
-    print('Loading word embeddings from {} ...'.format(path_to_embedding))
-    start_time = time.time()
-    #word_embeddings, _ = text_utils._load_embeddings(path_to_embedding)
-    word_embeddings, _ = text_utils._load_embeddings_other(path_to_embedding)
-    print(len(word_embeddings.keys()))
-    print("--- That took {} seconds ---".format(time.time() - start_time))
-
-    # We want to run the analysis in chunks for large processes.
-    chunk_size = 200
-    incrament = np.arange(0, len(bill_df)+20, chunk_size)
-    min_ix = incrament[:-1]
-    max_ix = incrament[1:]
-    num_chunks = len(incrament[:-1])
-    print('Working in chunks of {} rows'.format(chunk_size))
-    print('There will be {} chunks total'.format(num_chunks))
-    for ix in range(num_chunks):
-
-        bill_df_chunk = bill_df[min_ix[ix]:max_ix[ix]].copy()
-        get_data = aggregate_training_data(bill_df_chunk,word_embeddings=word_embeddings, embedding_size=embedding_size, nlp=nlp)
-        #get_data = aggregate_training_data(bill_df_chunk, nlp=nlp)
-        #all_labeled, all_embed_data, all_text_data, all_sum_text = get_data
-        all_labeled, all_text_data, all_sum_text = get_data
-
-        # Save labeled data
-        labeled_filename = '{}_training_labeled_{}.csv'.format(date, subject)
-        labeled_savepath = os.path.join(TRAINING_DATA_ROOT, labeled_filename)
-        bill_utils.to_csv_append_mode(all_labeled, labeled_savepath)
-
-        # Save embeddings for text and summaries
-        embeddings_filename = '{}_allembeddings_leglemno_{}.csv'.format(date,
-                                                                     subject)
-        embeddings_savepath = os.path.join(TRAINING_DATA_ROOT,
-                                           embeddings_filename)
-        bill_utils.to_csv_append_mode(all_embed_data, embeddings_savepath)
-
-        # Save text
-        all_text_filename = '{}_structuredtext_leglemno_{}.csv'.format(date,
-                                                              subject)
+        #subject = 'Crime and law enforcement'
+        #subject = 'Education'
+        custom = 'leglemno'
+        #custom = 'glove200'
+        all_text_filename = '{}_structuredtext_{}_{}.csv'.format(date,custom,
+                                                                  subject)
         all_text_savepath = os.path.join(TRAINING_DATA_ROOT, all_text_filename)
-        bill_utils.to_csv_append_mode(all_text_data, all_text_savepath)
+        print(TRAINING_DATA_ROOT)
+        print(all_text_savepath)
+        print(os.path.isfile(all_text_savepath))
 
-        # Save summaries
-        all_sum_text = '{}_structuredsummaries_leglemno_{}.csv'.format(date,
-                                                              subject)
-        all_sum_savepath = os.path.join(TRAINING_DATA_ROOT, all_sum_text)
-        bill_utils.to_csv_append_mode(all_sum_text, all_sum_savepath)
+        # Connect to database
+        dbname = 'congressional_bills'
+        username = 'postgres'
+        password = 'password'
+        engine = sqlalchemy.create_engine('postgres://%s:%s@localhost/%s' %
+                                          (username, password, dbname))
+        print(engine.url)
+
+
+        print('Querying data ...')
+        start_time = time.time()
+        bill_df = bill_utils.retrieve_data(engine, subject=subject)
+        #bill_df = bill_df[bill_df.subject_top_term.isin([ 'Crime and law enforcement', 'Education', 'Health', 'Taxation'])]
+        bill_df = bill_df.reset_index(drop=True)
+
+        print("--- That took {} seconds ---".format(time.time() - start_time))
+
+        nlp_models = ['en_vectors_web_lg', 'en_core_web_lg']
+        nlp_model = nlp_models[1]
+
+        print('Loading NLP model {}'.format(nlp_model))
+        start_time = time.time()
+        #nlp = spacy.load('en_core_web_sm')
+        nlp = spacy.load('en_core_web_lg')
+        print("--- That took {} seconds ---".format(time.time() - start_time))
+
+        embedding_size = 200
+        #path_to_embedding = 'glove.6B/glove.6B.{}d.txt'.format(embedding_size)
+        #path_to_embedding = '/media/swimmers3/ferrari_06/repo/billuminate/nlp_models/glove.6B/glove.6B.{}d.txt'.format(embedding_size)
+        #print('Loading word embeddings from {} ...'.format(path_to_embedding))
+        path_to_embedding = '/media/swimmers3/ferrari_06/repo/billuminate/nlp_models/word2vec-legal/lemmatized-legal/no replacement/legal_lemmatized_no_replacement.bin'
+        print('Loading word embeddings from {} ...'.format(path_to_embedding))
+        start_time = time.time()
+        #word_embeddings, _ = text_utils._load_embeddings(path_to_embedding)
+        word_embeddings, _ = text_utils._load_embeddings_other(path_to_embedding)
+        print(len(word_embeddings.keys()))
+        print("--- That took {} seconds ---".format(time.time() - start_time))
+
+        # We want to run the analysis in chunks for large processes.
+        chunk_size = 100
+        incrament = np.arange(0, len(bill_df)+20, chunk_size)
+        min_ix = incrament[:-1]
+        max_ix = incrament[1:]
+        num_chunks = len(incrament[:-1])
+        print('Working in chunks of {} rows'.format(chunk_size))
+        print('There will be {} chunks total'.format(num_chunks))
+        for ix in range(num_chunks):
+            #print(TRAINING_DATA_ROOT)
+            #bill_df_chunk = bill_df[min_ix[ix]:max_ix[ix]].copy()
+            bill_df_chunk = bill_df.loc[min_ix[ix]:max_ix[ix]].copy()#bill_df[min_ix[ix]:max_ix[ix]].copy()
+
+            get_data = aggregate_training_data(bill_df_chunk,word_embeddings=word_embeddings, embedding_size=embedding_size, nlp=nlp)
+            #get_data = aggregate_training_data(bill_df_chunk, nlp=nlp)
+            #all_labeled, all_embed_data, all_text_data, all_sum_text = get_data
+            all_labeled, all_text_data, all_sum_text = get_data
+
+            # Save labeled data
+            labeled_filename = '{}_training_labeled_{}_{}.csv'.format(date,custom,
+                                                                  subject)
+            labeled_savepath = os.path.join(TRAINING_DATA_ROOT, labeled_filename)
+            bill_utils.to_csv_append_mode(all_labeled, labeled_savepath)
+
+            # Save embeddings for text and summaries
+    #         embeddings_filename = '{}_allembeddings_leglemno_{}.csv'.format(date,
+    #                                                                      subject)
+    #         embeddings_savepath = os.path.join(TRAINING_DATA_ROOT,
+    #                                            embeddings_filename)
+    #         bill_utils.to_csv_append_mode(all_embed_data, embeddings_savepath)
+
+            # Save text
+            all_text_filename = '{}_structuredtext_{}_{}.csv'.format(date,custom,
+                                                                  subject)
+            all_text_savepath = os.path.join(TRAINING_DATA_ROOT, all_text_filename)
+            bill_utils.to_csv_append_mode(all_text_data, all_text_savepath)
+
+            # Save summaries
+            all_sum_filename = '{}_structuredsummaries_{}_{}.csv'.format(date,custom,
+                                                                  subject)
+            all_sum_savepath = os.path.join(TRAINING_DATA_ROOT, all_sum_filename)
+            bill_utils.to_csv_append_mode(all_sum_text, all_sum_savepath)
 
 
 if __name__ == "__main__":

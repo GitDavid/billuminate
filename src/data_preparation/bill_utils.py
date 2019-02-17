@@ -25,7 +25,8 @@ def select_random_rows(df, n_rows):
     return df
 
 
-def to_csv_append_mode(file_path, df):
+def to_csv_append_mode(df, file_path):
+    print(file_path)
     if not os.path.isfile(file_path):
         df.to_csv(file_path)
     else:

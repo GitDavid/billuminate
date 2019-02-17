@@ -1,8 +1,14 @@
 import sys
 if sys.platform == "linux":
     sys.path.append('/home/ubuntu/repo/billuminate/src/')
+    sys.path.append('/media/swimmers3/ferrari_06/repo/billuminate/src/')
+
 elif sys.platform == "darwin":
     sys.path.append('/Users/melissaferrari/Projects/repo/billuminate/src/')
+
+MODEL_ROOT = '../../models/'
+NLP_MODEL_ROOT = '../../nlp_models/'
+TRAINING_DATA_ROOT = '../../data/training_data/'
 
 
 import numpy as np
@@ -17,7 +23,7 @@ def feature_generators(txt_df, feature_dict=None, joint_title=None):
     txt_df['clean_text'] = txt_df['clean_text'].fillna("")
 
     assert 'clean_text' in txt_df.columns
-    print(txt_df.columns)
+    #print(txt_df.columns)
     if not feature_dict:
         feature_dict = {
             'title_word_count': lambda x: len([wrd for wrd in x.split()
@@ -59,7 +65,7 @@ def prepare_features(bill):
 
     X, feature_list = feature_generators(X,
                                          joint_title=joint_title)
-    print(joint_title)
+    # print(joint_title)
     # feature_df_cols = ['clean_text', 'tag_rank', 'abs_loc', 'norm_loc']
     # feature_df_cols.extend(feature_list)
     # X = full_txt[feature_df_cols]
