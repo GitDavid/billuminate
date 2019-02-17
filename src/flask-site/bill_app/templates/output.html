@@ -4,60 +4,61 @@
 
 
 <!-- AUTOCOMPLETE BILL FIELD -->
-<script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
+<script src="../static/js/jquery-3.3.1.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
 <script src="../static/js/bootstrap.min.js"></script>
 <script src="../static/js/jquery-ui.min.js"></script>
 <script src="../static/js/bootstrap-slider.js"></script>
-<script src="../static/css/bootstrap-slider.css"></script>
 
 <script>
-    $(function() {
-      $( "#bill_autocomplete" ).autocomplete({
-        source: function( request, response ) {
-          $.ajax({
-            url: '/api/bills/id/' + request.term,
-            dataType: "json",
-            success: function( data ) {
-              response( data );
-            }
-          });
-        },
-        minLength: 2
-      });
-
-      $( "#bill_title_autocomplete" ).autocomplete({
-        source: function( request, response ) {
-          $.ajax({
-            url: '/api/bills/title/' + request.term,
-            dataType: "json",
-            success: function( data ) {
-              response( data );
-            }
-          });
-        },
-        minLength: 2
+  $(function () {
+    $("#bill_autocomplete").autocomplete({
+      source: function (request, response) {
+        $.ajax({
+          url: '/api/bills/id/' + request.term,
+          dataType: "json",
+          success: function (data) {
+            response(data);
+          }
         });
+      },
+      minLength: 2
+    });
 
-        $( "#bill_subject_autocomplete" ).autocomplete({
-        source: function( request, response ) {
-          $.ajax({
-            url: '/api/bills/subject/' + request.term,
-            dataType: "json",
-            success: function( data ) {
-              response( data );
-            }
-          });
-        },
-        minLength: 2
+    $("#bill_title_autocomplete").autocomplete({
+      source: function (request, response) {
+        $.ajax({
+          url: '/api/bills/title/' + request.term,
+          dataType: "json",
+          success: function (data) {
+            response(data);
+          }
         });
+      },
+      minLength: 2
+    });
 
+    $("#bill_subject_autocomplete").autocomplete({
+      source: function (request, response) {
+        $.ajax({
+          url: '/api/bills/subject/' + request.term,
+          dataType: "json",
+          success: function (data) {
+            response(data);
+          }
+        });
+      },
+      minLength: 2
+    });
 
-        $("#time_slider").bootstrapSlider();
-         $("#destroyTimeSlider").click(function() {
-           $("#time_slider").bootstrapSlider('destroy');
-            });
+    $.Slider = null;
+    $('#time_slider').bootstrapSlider({
+      formatter: function (value) {
+        return 'Current value: ' + value;
+      }
+    });
 
-      });
+  });
 
 </script>
 
@@ -70,12 +71,12 @@
           <input id="bill_autocomplete" name="bill_id" type="text" value="" class="ui-autocomplete-input">
         </div>
         <div class="col-md-3">
-            <label for="bill_title_autocomplete" class="control-label">Bill Title</label>
-            <input id="bill_title_autocomplete" name="bill_title" type="text" value="" class="ui-autocomplete-input">
+          <label for="bill_title_autocomplete" class="control-label">Bill Title</label>
+          <input id="bill_title_autocomplete" name="bill_title" type="text" value="" class="ui-autocomplete-input">
         </div>
         <div class="col-md-3">
           <label for="bill_subject_autocomplete" class="control-label">Subject</label>
-          <input id="bill_subject_autocomplete" name="bill_subject" type="text" value="" class="ui-autocomplete-input">  
+          <input id="bill_subject_autocomplete" name="bill_subject" type="text" value="" class="ui-autocomplete-input">
         </div>
         <div class="col-md-3">
           <button type="submit" class="btn btn-default btn-lg">Summarize this Bill!</button>
@@ -88,46 +89,75 @@
 
 <div class="container">
   <div class="row col-md-12">
-    <div class="col-md-2">
-    
-    </div>
-    <div class="col-md-6" align="center">
-        <div class="row">
-            <div class="col-md-12">
-                  <input id="time_slider" type="text" data-slider-min="2" data-slider-max="20" data-slider-step="1" data-slider-value="0"/>
-                  <button id="destroyTimeSlider" class='btn btn-primary'>Set Reading Time</button>
-                </div>
-          </div>
 
-        <div class="row text-center">
-          <div class="col-md-12">
+    <!-- FURTHEST LEFT COLUMN-->
+    <div class="col-md-2">
+
+    </div>
+
+    <!-- MIDDLE COLUMN -->
+    <div class="col-md-6" style="align-content: center">
+
+      <div class="row" id="slider">
+
+        <form action="/output" method="GET" method="POST" role="form">
+
+          <div class="well well-lg">
+            <div class="col-md-8">
+              <div class="slider slider-horizontal">
+                <div class="slider-track">
+                  <div class="slider-selection" style="left: 0%; width: 100%;">
+                  </div>
+                  <div class="slider-handle round hide" style="left: 0%;">
+                  </div>
+                </div>
+                <div class="tooltip top" style="top: -40px; left: 90px;">
+                  <div class="tooltip-arrow">
+                  </div>
+                  <div class="tooltip-inner">Current value: 10</div>
+                </div>
+                <input type="text" class="span2" value="4" id="time_slider" name="reading_time">
+              </div>
+            </div>
+            <div class="col-md-4">
+              <button type="submit" class="btn btn-primary">Set Reading Time</button>
+            </div>
+          </div>
+        </form>
+
+      </div>
+
+      <div class="row text-center">
+        <div class="col-md-12">
           <h3>Summarization</h3>
-            <br>
-            <br> 
-            <p class="lead text-center bg-info", style="font-size:135%;">
-              {{ bill_info.official_title }} 
-            </p>
-            <br>
-            <br> 
+          <br>
+          <br>
+          <p class="lead text-center bg-info" , style="font-size:135%;">
+            {{ bill_info.official_title }}
+          </p>
+          <br>
+          <br>
           <p class="lead text-justify" style="font-size:120%;">
-        
-          {% for _, row in summarization_result.iterrows() %}
-          {% if row["tag"] == "section" %}
-           <b>{{ row["text"] }}</b><br>
-          {% else %}
+
+            {% for _, row in summarization_result.iterrows() %}
+            {% if row["tag"] == "section" %}
+            <b>{{ row["text"] }}</b><br>
+            {% else %}
             {{ row["text"] }} <br>
-           {% endif %}
-     
-       {% endfor %}
+            {% endif %}
+
+            {% endfor %}
 
           </p>
         </div>
       </div>
     </div>
+
+    <!-- FURTHEST RIGHT COLUMN  -->
     <div class="col-md-4">
-    
+
     </div>
-<!--     
+    <!--     
  
 
   <table class="table table-hover">
@@ -135,8 +165,8 @@
       <tr><td>{{ bill_info.bill_id }}</td><td>{{ bill_info.official_title }}</td><td> {{ bill_info.subjects_top_term }}</td></tr>
     </table> -->
 
-  
-</div>
+
+  </div>
 </div>
 
 {% endblock %}

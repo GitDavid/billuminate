@@ -44,6 +44,9 @@ def bills_output():
     bill_id = request.args.get('bill_id')
     print('BILL ID = {}'.format(bill_id))
 
+    read_time = request.args.get('time_slider')
+    print('Read time = {}'.format(read_time))
+    
     bill_df = bill_utils.retrieve_data(con, bill_id=bill_id, subject=None)
 
     X, info_dict = model_utils.apply_model(bill_df, bill_id, model=current_model)
