@@ -1,8 +1,16 @@
 import sys
 if sys.platform == "linux":
     sys.path.append('/home/ubuntu/repo/billuminate/src/')
+
+    MODEL_ROOT = '/home/ubuntu/repo/billuminate/models/'
+    NLP_MODEL_ROOT = '/home/ubuntu/repo/billuminate/nlp_models/'
+
 elif sys.platform == "darwin":
     sys.path.append('/Users/melissaferrari/Projects/repo/billuminate/src/')
+
+    MODEL_ROOT = '../../models/'
+    NLP_MODEL_ROOT = '../../nlp_models/'
+    TRAINING_DATA_ROOT = '../../data/training_data/'
 
 import os
 import time
@@ -15,8 +23,6 @@ import datetime
 
 from data_preparation import feature_utils, bill_utils
 import tqdm
-
-TRAINING_DATA_ROOT = '../../data/training_data/'
 
 
 def aggregate_feature_data(features_df, train_df, bills_info,
