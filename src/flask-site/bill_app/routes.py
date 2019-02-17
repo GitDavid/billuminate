@@ -11,33 +11,26 @@ elif sys.platform == "darwin":
     MODEL_ROOT = '../../models/'
     NLP_MODEL_ROOT = '../../nlp_models/'
 
-from flask import render_template, request, jsonify  # Response
+from flask import render_template, request, jsonify 
+from sqlalchemy import create_engine
+
 from bill_app import app
 import pandas as pd
 import psycopg2
-# from bill_app import models  # feature_utils, bill_utils, apply_model
 import json
 from wtforms import TextField, Form
 from modeling import model_utils
 from data_preparation import bill_utils
 import spacy
+from bill_app import con
 
 
 print('loading models')
-#nlp = spacy.load(NLP_MODEL_ROOT + 'en_core_web_lg')
 model_name = 'over_RandomForestClassifier_on_health_nestimators100_random_state0.pkl'
 current_model = model_utils.load_model(MODEL_ROOT + model_name)
 tfidf_train = model_utils.load_model(MODEL_ROOT + 'tifidf_trained.pkl')
 
 print('done loading models')
-
-# Python code to connect to Postgres
-user = 'postgres'  # 'melissaferrari'  # add your Postgres username here
-# host = '/run/postgresql/' #'localhost'
-host = 'localhost'
-dbname = 'congressional_bills'
-con = psycopg2.connect(database=dbname, user=user, host=host,
-                       password='password')
 
 
 @app.route('/', methods=['GET', 'POST'])
