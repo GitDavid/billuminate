@@ -1,18 +1,15 @@
-import sys
-if sys.platform == "linux":
-    sys.path.append('/home/ubuntu/repo/billuminate/src/')
-elif sys.platform == "darwin":
-    sys.path.append('/Users/melissaferrari/Projects/repo/billuminate/src/')
-
-
-import numpy as np
-import pandas as pd
-import re
-from lxml import etree
-import numpy as np
 from gensim import summarization
+from lxml import etree
+import re
+import pandas as pd
+import numpy as np
+import sys
+sys.path.append('/../../src/')
 
 from data_preparation import feature_utils,  bill_utils
+
+MODEL_ROOT = '../../models/'
+NLP_MODEL_ROOT = '../../nlp_models/'
 
 
 def create_single_text_string(tree, tag='text'):
@@ -34,3 +31,7 @@ def do_summarization(string_xml):
     print('summary length: {}'.format(len(summarized)))
 
     return summarized
+
+
+def read_time(word_count, wpm=200):
+    return np.divide(word_count, wpm)

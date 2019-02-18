@@ -1,47 +1,42 @@
-import sys
-if sys.platform == "linux":
-    sys.path.append('/home/ubuntu/repo/billuminate/src/')
-
-    MODEL_ROOT = '/home/ubuntu/repo/billuminate/models/'
-    NLP_MODEL_ROOT = '/home/ubuntu/repo/billuminate/nlp_models/'
-
-elif sys.platform == "darwin":
-    sys.path.append('/Users/melissaferrari/Projects/repo/billuminate/src/')
-
-    MODEL_ROOT = '../../models/'
-    NLP_MODEL_ROOT = '../../nlp_models/'
-
-from flask import render_template, request, jsonify 
-from sqlalchemy import create_engine
-
-from bill_app import app
-import pandas as pd
-import psycopg2
-import json
-from wtforms import TextField, Form
-from modeling import model_utils
-from data_preparation import bill_utils
-import spacy
+from flask import render_template, request, jsonify
 from bill_app import con
+import spacy
+from data_preparation import bill_utils
+from modeling import model_utils
+import numpy as np
+from wtforms import TextField, Form
+import json
+import psycopg2
+import pandas as pd
+from bill_app import app
+from sqlalchemy import create_engine
+import sys
+sys.path.append('/../../src/')
+
+# if sys.platform == "linux":
+#     sys.path.append('/home/ubuntu/repo/billuminate/src/')
+
+#     MODEL_ROOT = '/home/ubuntu/repo/billuminate/models/'
+#     NLP_MODEL_ROOT = '/home/ubuntu/repo/billuminate/nlp_models/'
+
+# elif sys.platform == "darwin":
+
+MODEL_ROOT = '../../models/'
+NLP_MODEL_ROOT = '../../nlp_models/'
 
 
 print('loading models')
 model_name = 'over_RandomForestClassifier_on_health_nestimators100_random_state0.pkl'
 current_model = model_utils.load_model(MODEL_ROOT + model_name)
 tfidf_train = model_utils.load_model(MODEL_ROOT + 'tifidf_trained.pkl')
-
 print('done loading models')
 
 
 @app.route('/', methods=['GET', 'POST'])
-# def index():
-#     return render_template("bill_search.html",)
-
-@app.route('/', methods=['GET', 'POST'])
-@app.route('/output', methods=['GET'])
+@app.route('/bills_output', methods=['GET'])
 def bills_output():
-    bill_id=None 
-    bill_title=None
+    bill_id = None
+    bill_title = None
 
     bill_id = request.args.get('bill_id')
     print('BILL ID = {}'.format(bill_id))
@@ -51,34 +46,58 @@ def bills_output():
 
     read_time = request.args.get('reading_time')
     print('Read time = {}'.format(read_time))
-    
-    if any(x for x in [bill_id, bill_title]):   
+
+    if any(x for x in [bill_id, bill_title]):
         print(bill_title)
         print(bill_id)
-        bill_df = bill_utils.retrieve_data(con, bill_id=bill_id, bill_title=bill_title, subject=None)
-       
+        bill_df = bill_utils.retrieve_data(
+            con, bill_id=bill_id, bill_title=bill_title, subject=None)
+
         if bill_df.empty:
+
             return render_template("bill_not_found.html",
-                            bill_id=bill_id,
-                            bill_title =bill_title)
+                                   bill_id=bill_id,
+                                   bill_title=bill_title)
 
         bill_id = bill_df.bill_id.unique()[0]
-        X, info_dict = model_utils.apply_model(bill_df, bill_id, model=current_model)
+        X, info_dict = model_utils.apply_model(
+            bill_df, bill_id, model=current_model)
+        
+        wpm = 200 #words per minute
+        X['read_time'] = np.divide(X['word_count'], wpm).round(decimals=2)
+        X['predict_ranking'] = X['predict_proba1'].rank(ascending=False).astype(int)
 
-        pred_results = X[(X.prediction == 1) | (X.tag == 'section')].copy()
-        min_slide_val = 2
-        max_slide_val = 10
+        sum_ser = X.sort_values(by='predict_proba1',
+                                ascending=False)['read_time'].cumsum()
+        sum_ser.name = 'time_cumulative'
+
+        X = pd.merge(X, pd.DataFrame(sum_ser), left_index=True, right_index=True)
+        
+        min_slide_val = 1
+        max_slide_val = np.ceil(X['read_time'].sum()).astype(int)
+        if max_slide_val == min_slide_val:
+            max_slide_val += 1
+        if not read_time:
+            read_time = X[X.prediction == 1]['read_time'].sum()
+
+        pred_results = X[(X.time_cumulative <= (float(read_time) + .01))
+                         | (X.tag == 'section')].copy()
+        read_time = int(np.ceil(float(read_time)))
+
         return render_template("output.html",
-                            summarization_result=pred_results[['tag', 'tag_rank', 'text']],
-                            bill_info=info_dict, 
-                            min_slide_val=min_slide_val,
-                            max_slide_val=max_slide_val)
+                               summarization_result=pred_results[['tag', 'tag_rank', 'text']],
+                               bill_info=info_dict,
+                               min_slide_val=min_slide_val,
+                               max_slide_val=max_slide_val,
+                               init_slide_val=read_time)
     else:
-         return render_template("output.html",
-                            summarization_result=pd.DataFrame(columns=['tag', 'tag_rank', 'text']),
-                            bill_info=None, 
-                            min_slide_val=0,
-                            max_slide_val=20)       
+        empty_df = pd.DataFrame(columns=['tag', 'tag_rank', 'text'])
+        return render_template("output.html",
+                               summarization_result=empty_df,
+                               bill_info=None,
+                               min_slide_val=0,
+                               max_slide_val=10,
+                               init_slide_val=5)
 
 
 @app.route('/api/bills/id/<bill_id>', methods=['GET'])
@@ -94,7 +113,8 @@ def get_bills_by_id(bill_id):
 @app.route('/api/bills/title/<title>', methods=['GET'])
 def get_bills_by_title(title):
 
-    query = "SELECT official_title FROM bills WHERE official_title LIKE '%" + title + "%' LIMIT 10;"
+    query = "SELECT official_title FROM bills WHERE official_title LIKE '%" + \
+        title + "%' LIMIT 10;"
     query_results = pd.read_sql_query(query, con)
     output_list = list(query_results['official_title'].values)
     print(output_list)
@@ -104,7 +124,8 @@ def get_bills_by_title(title):
 @app.route('/api/bills/subject/<subject>', methods=['GET'])
 def get_bills_by_subject(subject):
 
-    query = "SELECT subjects_top_term FROM bills WHERE subjects_top_term LIKE '%" + subject + "%' LIMIT 10;"
+    query = "SELECT subjects_top_term FROM bills WHERE subjects_top_term LIKE '%" + \
+        subject + "%' LIMIT 10;"
     query_results = pd.read_sql_query(query, con)
     output_list = list(query_results['subjects_top_term'].values)
     print(output_list)

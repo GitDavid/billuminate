@@ -1,18 +1,15 @@
+from data_preparation import text_utils, training_utils
+import pandas as pd
+import numpy as np
+import xml.etree.ElementTree as ET
+import re
+import os
 import sys
 if sys.platform == "linux":
     sys.path.append('/home/ubuntu/repo/billuminate/src/')
     sys.path.append('/media/swimmers3/ferrari_06/repo/billuminate/src/')
 elif sys.platform == "darwin":
     sys.path.append('/Users/melissaferrari/Projects/repo/billuminate/src/')
-
-import os
-import re
-import xml.etree.ElementTree as ET
-
-import numpy as np
-import pandas as pd
-
-from data_preparation import text_utils, training_utils
 
 
 def get_bill(df, bill_id):
@@ -55,6 +52,8 @@ def _return_correct_version(df_bills,
         return df_bills.iloc[0].to_dict()
     else:
         return df_bills
+
+# def retrieve_data_web(url):
 
 
 def retrieve_data(engine, bill_id=None, bill_title=None, subject=None):
@@ -284,15 +283,15 @@ def _clean_extracted_list(txt_extract, tag_rankings=None):
     # Concat text between ranked tags
     # THIS SHOULD BE DONE DIFFERENTLY.
     # MULTIPLE SENTENCES IN SAME ENUMERATION LEVEL SHOULD NOT BE CONCATENATED
-    
+
     ranked_tags = txt_df.dropna(subset=['tag_rank']).index.values
     ranked_tags = np.append(ranked_tags, max(txt_df.index) + 1)
     for ix in range(len(ranked_tags) - 1):
         txt_df.loc[ranked_tags[ix], 'text'] = txt_df.reindex(
-                range(ranked_tags[ix],
-                      ranked_tags[ix + 1]))['text'].str.cat(sep=' ')
+            range(ranked_tags[ix],
+                  ranked_tags[ix + 1]))['text'].str.cat(sep=' ')
         txt_df = txt_df.drop(np.arange(ranked_tags[ix] + 1,
-                                           ranked_tags[ix + 1]), errors='ignore')
+                                       ranked_tags[ix + 1]), errors='ignore')
 
     # Remove short title if first section
     if 'short title' in txt_df.iloc[0]['text'].lower():
@@ -357,9 +356,8 @@ def _describe_full_text(full_string, bill_id, get_vecs=False,
         full_txt['norm_loc'] = (np.divide(locs - locs.min(),
                                           1)).values
 
-        
     if get_vecs:
-        #print(get_vecs)
+        # print(get_vecs)
         #print(len(word_embeddings.keys()), embedding_size)
         assert all(x for x in [word_embeddings, embedding_size])
         fvecs = text_utils._calc_embeddings_set(fsents,
@@ -380,7 +378,7 @@ def _describe_summ_text(summ_string, bill_id, short_title,
 
     sum_df['bill_id'] = bill_id
     sum_df['clean_text'] = ssents
-    sum_df = sum_df.rename(columns={0:'text'})
+    sum_df = sum_df.rename(columns={0: 'text'})
     svecs = text_utils._calc_embeddings_set(ssents,
                                             word_embeddings,
                                             embedding_size)
@@ -410,21 +408,20 @@ def generate_bill_data(bill,
 
     if train:
         assert nlp
-        #print(get_vecs)
+        # print(get_vecs)
         full_txt, fvecs = _describe_full_text(full_string, bill_id,
                                               get_vecs,
-                                                  word_embeddings,
-                                                  embedding_size
-                                                  )
+                                              word_embeddings,
+                                              embedding_size
+                                              )
 
-            
         summ_string = bill['summary_text']
 
         sum_df, svecs = _describe_summ_text(summ_string, bill_id,
                                             short_title,
                                             word_embeddings,
                                             embedding_size, nlp)
-        
+
         get_values = training_utils.label_important(fvecs, svecs,
                                                     embedding_size,
                                                     max_sim=0.5)
@@ -439,7 +436,7 @@ def generate_bill_data(bill,
         summ_data['in_summary'] = 2
         summ_data['bill_id'] = bill_id
         summ_data['mean_importance'] = 1.
-        
+
         label_df = label_df.reset_index()
         label_df = label_df.rename(columns={'index': 'loc_ix'})
         label_df['bill_id'] = bill_id
@@ -451,6 +448,6 @@ def generate_bill_data(bill,
         #embed_data = pd.concat([label_df, summ_data], sort=False)
         label_df = pd.concat([label_df, summ_data], sort=False).copy()
 
-        #return label_df, embed_data, full_txt, sum_df
+        # return label_df, embed_data, full_txt, sum_df
 
         return label_df, full_txt, sum_df

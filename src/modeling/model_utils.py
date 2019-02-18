@@ -74,8 +74,13 @@ def apply_model(bills_info, bill_id, model=None, tfidf_train=None, train=False, 
 
     assert X_numeric.shape[1] == model.n_features_
     y_pred = model.predict(X_numeric)
+    y_probs = model.predict_proba(X_numeric)
 
+    print(y_pred.shape)
+    print(y_probs.shape)
     X['prediction'] = y_pred
+    X['predict_proba0'] = y_probs[:,0]
+    X['predict_proba1'] = y_probs[:,1]
 
     return X, bill
 
