@@ -55,7 +55,8 @@ def get_bill_dict(bills_info, bill_id):
     bill = bill_utils._return_correct_version(bill, as_dict=True)
     return bill
 
-
+##quick requests/beautifulsoup
+##https://glowingpython.blogspot.com/2014/09/text-summarization-with-nltk.html
 def apply_model(bills_info, bill_id, model=None, tfidf_train=None, train=False, get_vecs=False):
 
     bill = get_bill_dict(bills_info, bill_id)

@@ -22,6 +22,16 @@ def _make_lowercase(sentences):
 
 
 def _general_text_cleaning(text):
+    
+    """
+    ## deal with numbered lists
+    r"^\d+\.\s"
+    r"\([i]+\)"
+    r"[i]+\."
+    r"\([A-Z]\)"
+    r"\([a-z]\)"
+    r"\([\d]\)"
+    """
 
     text = re.sub(r"\'s", "", text)
     text = re.sub(r" whats ", " what is ", text, flags=re.IGNORECASE)
@@ -231,11 +241,12 @@ def _calc_embeddings_set(sents, word_embeddings, embedding_size=None):
 
 def _create_sim_mat(vecs_1, vecs_2, embedding_size):
     sim_mat = np.zeros([len(vecs_1), len(vecs_2)])
-    vlen = embedding_size
-    for i in range(len(vecs_1)):
-        for j in range(len(vecs_2)):
-            sim_mat[i][j] = cosine_similarity(vecs_1[i].reshape(1, vlen),
-                                              vecs_2[j].reshape(1, vlen))[0, 0]
+#     vlen = embedding_size
+#     for i in range(len(vecs_1)):
+#         for j in range(len(vecs_2)):
+#             sim_mat[i][j] = cosine_similarity(vecs_1[i].reshape(1, vlen),
+#                                               vecs_2[j].reshape(1, vlen))[0, 0]
+    sim_mat = cosine_similarity(vecs_1, vecs_2)
     return sim_mat
 
 
@@ -265,7 +276,7 @@ def _sort_matrix_ix(sim_mat, num_rows=1, axis=0):
     return ix_sort, ix_match
 
 
-def _extract_entities(sentences, nlp, bad_ents=None):
+def _extract_entities(sentences, nlp, good_ents=None, bad_ents=None):
 
     # Needs work before use
     if not bad_ents:
@@ -273,6 +284,8 @@ def _extract_entities(sentences, nlp, bad_ents=None):
 
     df_ent = pd.DataFrame()
     for ix, sentence in enumerate(sentences):
+        if not isinstance(sentence, str):
+            sentence = " "
         doc = nlp(sentence)
         for ent in doc.ents:
 
