@@ -1,3 +1,5 @@
+import os
+import pickle
 from flask import render_template, request, jsonify
 from bill_app import con
 import spacy
@@ -25,11 +27,16 @@ MODEL_ROOT = '../../models/'
 NLP_MODEL_ROOT = '../../nlp_models/'
 
 
-print('loading models')
-model_name = 'over_RandomForestClassifier_on_health_nestimators100_random_state0.pkl'
-current_model = model_utils.load_model(MODEL_ROOT + model_name)
+#print('loading models')
+model_save_path = os.path.join(MODEL_ROOT, 'undersampled_RandomForestClassifier10_tfidf10000_other22_linux.pickle')
+with open(model_save_path, 'rb') as trained_model:
+    current_model = pickle.load(trained_model)
+
+# model_name = 'over_RandomForestClassifier_on_health_nestimators100_random_state0.pkl'
+#current_model = model_utils.load_model(MODEL_ROOT + model_name)
+tfidf_save_path = os.path.join(MODEL_ROOT, 'tfidf_linux.pickle')
 tfidf_train = model_utils.load_model(MODEL_ROOT + 'tifidf_trained.pkl')
-print('done loading models')
+#print('done loading models')
 
 
 @app.route('/', methods=['GET', 'POST'])
