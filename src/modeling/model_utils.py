@@ -38,7 +38,6 @@ def _apply_tfidf(text_col, tfidf_train):
     tfidf = tfidf_train.transform(text_col)
     return tfidf
 
-
 def join_features(feature_list):
 
     if any(sparse.issparse(x) for x in feature_list):

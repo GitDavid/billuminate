@@ -40,6 +40,18 @@
 
         $(function () {
 
+            function showByTime(time){
+                $( ".timed" ).each(function( index ) {
+                    var lineTime = parseFloat($( this ).attr('time'));
+                    
+                    if (lineTime > time) {
+                        $( this ).hide();
+                    } else {
+                        $( this ).show();
+                    }
+                });
+            }
+
             if (bill_id_current) {
                 $('#bill_autocomplete').val(bill_id_current);
             }
@@ -101,12 +113,15 @@
 
             $("#time_slider").on("slide", function (slideEvt) {
                 $("#ex6SliderVal").text(slideEvt.value);
+                showByTime(parseFloat(slideEvt.value));
             });
 
             if (reading_time_current) {
                 $('#time_slider').bootstrapSlider('setValue', reading_time_current);
                 $("#ex6SliderVal").text(reading_time_current);
             }
+
+            showByTime($('#time_slider').val())
         });
 
     </script>

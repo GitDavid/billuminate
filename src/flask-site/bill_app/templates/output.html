@@ -26,6 +26,9 @@
 
       </div> -->
 
+      <!--
+{{ summarization_result }}
+      -->
       <div class="row text-center">
         <div class="col-md-12">
           <h3>Summarization</h3>
@@ -40,11 +43,13 @@
 
             {% for _, row in summarization_result.iterrows() %}
             {% if row["tag"] == "section" %}
+            <div>
             <b>{{ row["text"] }}</b><br>
             {% else %}
+            <div class="timed" time="{{ row["time_cumulative"] }}">
             {{ row["text"] }} <br>
             {% endif %}
-
+            </div>
             {% endfor %}
 
           </p>

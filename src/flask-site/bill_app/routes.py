@@ -103,7 +103,7 @@ def bills_output():
         read_time = int(np.ceil(float(read_time)))
 
         return render_template("output.html",
-                               summarization_result=pred_results[['tag', 'tag_rank', 'text']],
+                               summarization_result=X[['time_cumulative', 'tag', 'tag_rank', 'text']],
                                bill_info=info_dict,
                                min_slide_val=min_slide_val,
                                max_slide_val=max_slide_val,
