@@ -1,25 +1,33 @@
+import sys
+if sys.platform == "linux":
+     sys.path.append('/home/ubuntu/repo/billuminate/src/')
+
+     MODEL_ROOT = '/home/ubuntu/repo/billuminate/models/'
+     NLP_MODEL_ROOT = '/home/ubuntu/repo/billuminate/nlp_models/'
+
+elif sys.platform == "darwin":
+    sys.path.append('/Users/melissaferrari/Projects/repo/billuminate/src/')
+
+#sys.path.append('/../../src/')
+
 import os
 import pickle
 from flask import render_template, request, jsonify
 from bill_app import con
 import spacy
-from data_preparation import bill_utils
+from data_preparation import bill_utils, text_utils
 from modeling import model_utils
 import numpy as np
 from wtforms import TextField, Form
 import json
 import psycopg2
 import pandas as pd
+from bill_app import con
 from bill_app import app
 from sqlalchemy import create_engine
-import sys
-sys.path.append('/../../src/')
+import en_core_web_lg
+nlp = en_core_web_lg.load()
 
-# if sys.platform == "linux":
-#     sys.path.append('/home/ubuntu/repo/billuminate/src/')
-
-#     MODEL_ROOT = '/home/ubuntu/repo/billuminate/models/'
-#     NLP_MODEL_ROOT = '/home/ubuntu/repo/billuminate/nlp_models/'
 
 # elif sys.platform == "darwin":
 
@@ -35,9 +43,12 @@ with open(model_save_path, 'rb') as trained_model:
 # model_name = 'over_RandomForestClassifier_on_health_nestimators100_random_state0.pkl'
 #current_model = model_utils.load_model(MODEL_ROOT + model_name)
 tfidf_save_path = os.path.join(MODEL_ROOT, 'tfidf_linux.pickle')
-tfidf_train = model_utils.load_model(MODEL_ROOT + 'tifidf_trained.pkl')
-#print('done loading models')
+with open(tfidf_save_path, 'rb') as trained_model:
+    tfidf_model = pickle.load(trained_model)
 
+embedding_size = 200
+path_to_embedding = NLP_MODEL_ROOT + 'lemmatized-legal/no replacement/legal_lemmatized_no_replacement.bin'
+word_embeddings, _ = text_utils._load_embeddings_other(path_to_embedding)
 
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/bills_output', methods=['GET'])
@@ -55,8 +66,6 @@ def bills_output():
     print('Read time = {}'.format(read_time))
 
     if any(x for x in [bill_id, bill_title]):
-        print(bill_title)
-        print(bill_id)
         bill_df = bill_utils.retrieve_data(
             con, bill_id=bill_id, bill_title=bill_title, subject=None)
 
@@ -68,8 +77,11 @@ def bills_output():
 
         bill_id = bill_df.bill_id.unique()[0]
         X, info_dict = model_utils.apply_model(
-            bill_df, bill_id, model=current_model)
-        
+            bill_df, bill_id, model=current_model, 
+                tfidf_train=tfidf_model, train=False, 
+                word_embeddings=word_embeddings, 
+                embedding_size=embedding_size, get_vecs=True, nlp_lib=nlp)
+
         wpm = 200 #words per minute
         X['read_time'] = np.divide(X['word_count'], wpm).round(decimals=2)
         X['predict_ranking'] = X['predict_proba1'].rank(ascending=False).astype(int)

@@ -57,23 +57,36 @@ def get_bill_dict(bills_info, bill_id):
 
 ##quick requests/beautifulsoup
 ##https://glowingpython.blogspot.com/2014/09/text-summarization-with-nltk.html
-def apply_model(bills_info, bill_id, model=None, tfidf_train=None, train=False, get_vecs=False):
+def apply_model(bills_info, bill_id, model=None, tfidf_train=None, train=False, 
+                word_embeddings=False, embedding_size=False, get_vecs=False, nlp_lib=False):
 
     bill = get_bill_dict(bills_info, bill_id)
 
-    X = feature_utils.prepare_features(bill, train=train, get_vecs=get_vecs)
+    X = feature_utils.prepare_features(bill, train=train, 
+                                       word_embeddings=word_embeddings, 
+                                       embedding_size=embedding_size, 
+                                       get_vecs=get_vecs, nlp_lib=nlp_lib)
+    print(X.columns)
     print(X.shape)
-    features = X.drop(columns=['loc_ix', 'tag', 'text',
-                               'clean_text', 'bill_id'])
+    # CURRENT
+    # ['loc_ix', 'tag', 'text', 'tag_rank', 'bill_id', 'clean_text', 'abs_loc',
+    #    'norm_loc', 'title_word_count', 'char_count', 'word_count',
+    #    'word_density']
 
-    feature_list = [features, ]
+    print(X['clean_text'])
+
+    features = X.drop(columns=['loc_ix', 'tag', 'text',
+                            'clean_text', 'bill_id']).copy()
+
+
     if tfidf_train:
         tfidf_mat = tfidf_train.transform(X['clean_text'])
-        feature_list.append(tfidf_mat)
-
+        feature_list = [features, tfidf_mat]
+    else:
+        feature_list = [features]
     X_numeric = join_features(feature_list)
 
-    assert X_numeric.shape[1] == model.n_features_
+    #assert X_numeric.shape[1] == model.n_features_
     y_pred = model.predict(X_numeric)
     y_probs = model.predict_proba(X_numeric)
 
