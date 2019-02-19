@@ -84,7 +84,7 @@ def bills_output():
             max_slide_val += 1
         if not read_time:
             read_time = X[X.prediction == 1]['read_time'].sum()
-
+        print(X['time_cumulative'])
         pred_results = X[(X.time_cumulative <= (float(read_time) + .01))
                          | (X.tag == 'section')].copy()
         read_time = int(np.ceil(float(read_time)))
