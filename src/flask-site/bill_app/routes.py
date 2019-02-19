@@ -25,9 +25,8 @@ import pandas as pd
 from bill_app import con
 from bill_app import app
 from sqlalchemy import create_engine
-import en_core_web_lg
-nlp = en_core_web_lg.load()
-
+#import en_core_web_lg
+nlp = spacy.load('en', parser=False)
 
 # elif sys.platform == "darwin":
 
