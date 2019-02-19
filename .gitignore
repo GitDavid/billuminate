@@ -1,7 +1,8 @@
 # Melissa added
 database_dump.sql
 data/
-models/
+test_models/
+# models/
 # notebooks/
 resources/
 nlp_models
