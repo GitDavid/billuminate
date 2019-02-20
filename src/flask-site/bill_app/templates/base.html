@@ -40,14 +40,14 @@
 
         $(function () {
 
-            function showByTime(time){
-                $( ".timed" ).each(function( index ) {
-                    var lineTime = parseFloat($( this ).attr('time'));
-                    
+            function showByTime(time) {
+                $(".timed").each(function (index) {
+                    var lineTime = parseFloat($(this).attr('time'));
+
                     if (lineTime > time) {
-                        $( this ).hide();
+                        $(this).hide();
                     } else {
-                        $( this ).show();
+                        $(this).show();
                     }
                 });
             }
@@ -173,7 +173,7 @@
                             <input id="bill_autocomplete" name="bill_id" type="text" value=""
                                 class="ui-autocomplete-input form-control">
                         </div>
-                        <div class="col-md-3 form-group" style="align-content: center;">
+                        <div class="col-md-4 form-group" style="align-content: center;">
                             <label for="bill_title_autocomplete" class="control-label">
                                 <p class="lead">Search by Title</p>
                             </label>
@@ -183,6 +183,15 @@
                         </div>
 
                         <div class="col-md-3 form-group" style="align-content: center;">
+                            <label for="reading_time" class="control-label">
+                                <span id="ex6CurrentSliderValLabel">
+                                            <p class="lead">
+                                                Read Time: <span id="ex6SliderVal">3</span> minutes
+                                            </p>
+                                        </span>
+
+                            </label>
+                            <br>
                             <div class="slider slider-horizontal" style="width: fit-content;">
                                 <div class="slider-track">
                                     <div class="slider-selection" style="left: 0%; width: 50%;">
@@ -195,18 +204,16 @@
                                 </div>
                                 <input type="text" class="span2 form-control" value="4" id="time_slider"
                                     name="reading_time">
-                                <span id="ex6CurrentSliderValLabel">
-                                    <p>
-                                        Read Time: <span id="ex6SliderVal">3</span> minutes
-                                    </p>
-                                </span>
+                                
                             </div>
                         </div>
-                        <div class="col-md-2">
-                            <button type="submit" class="btn btn-default btn-lg">Summarize this Bill!</button>
-                        </div>
-                        <div class="col-md-2">
-                            <button id="clear_btn" class="btn btn-default btn-lg">Find Another</button>
+                        <div class="col-md-3">
+                            <div class="row">
+                                <button type="submit" class="btn btn-default btn-lg">Summarize this Bill!</button>
+                            </div>
+                            <div>
+                                <button id="clear_btn" class="btn btn-default btn-lg">Find Another</button>
+                            </div>
                         </div>
                 </form>
             </div>

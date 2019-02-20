@@ -12,45 +12,24 @@
 
     <!-- MIDDLE COLUMN -->
     <div class="col-md-6" style="align-content: center">
-
-      <!-- <div class="row" id="slider">
-
-        <form action="/bills_output" method="GET" method="POST" role="form">
-
-
-            <div class="col-md-4">
-              <button type="submit" class="btn btn-primary">Set Reading Time</button>
-            </div>
-          </div>
-        </form>
-
-      </div> -->
-
-      <!--
-{{ summarization_result }}
-      -->
       <div class="row text-center">
         <div class="col-md-12">
-          <h3>Summarization</h3>
-          <br>
-          <br>
-          <p class="lead text-center bg-info" , style="font-size:135%;">
-            {{ bill_info.official_title }}
+
+          <p class="lead text-center" style="font-size:135%;">
+            <b>{{ bill_info.official_title }}</b>
           </p>
           <br>
-          <br>
-          <p class="lead text-justify" style="font-size:120%;">
-
+          <p>
             {% for _, row in summarization_result.iterrows() %}
             {% if row["tag"] == "section" %}
-            <div>
-            <b>{{ row["text"] }}</b><br>
-            {% else %}
-            <div class="timed" time="{{ row["time_cumulative"] }}">
-            {{ row["text"] }} <br>
-            {% endif %}
-            </div>
-            {% endfor %}
+            <div class="lead text-justify" style="font-size:120%;">
+              <b>{{ row["text"] }}</b><br>
+              {% else %}
+              <div class="timed lead text-justify" style="font-size:120%;" time="{{ row.time_cumulative }}">
+                {{ row["text"] }} <br>
+                {% endif %}
+              </div>
+              {% endfor %}
 
           </p>
         </div>

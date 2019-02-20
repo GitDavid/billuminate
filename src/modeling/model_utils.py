@@ -96,13 +96,3 @@ def apply_model(bills_info, bill_id, model=None, tfidf_train=None, train=False,
     X['predict_proba1'] = y_probs[:,1]
 
     return X, bill
-
-
-def render_final_text(X):
-
-    pred_results = X[(X.prediction == 1) | (X.tag == 'section')].copy()
-
-    for ix, row in pred_results.iterrows():
-        print(row['abs_loc'], row['tag'], int(row['tag_rank']))
-        print(row['text'])
-        print()
