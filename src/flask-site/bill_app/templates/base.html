@@ -183,35 +183,36 @@
                         </div>
 
                         <div class="col-md-3 form-group" style="align-content: center;">
-                            <label for="reading_time" class="control-label">
-                                <span id="ex6CurrentSliderValLabel">
-                                            <p class="lead">
-                                                Read Time: <span id="ex6SliderVal">3</span> minutes
-                                            </p>
-                                        </span>
 
-                            </label>
-                            <br>
-                            <div class="slider slider-horizontal" style="width: fit-content;">
-                                <div class="slider-track">
-                                    <div class="slider-selection" style="left: 0%; width: 50%;">
+                            <label for="reading_time" class="control-label">
+                                    <span id="ex6CurrentSliderValLabel">
+                                                <p class="lead">
+                                                    Read Time: <span id="ex6SliderVal">3</span> minutes
+                                                </p>
+                                            </span>
+
+                                </label>
+                                <br>
+                                <div class="slider slider-horizontal" style="width: fit-content;">
+                                    <div class="slider-track">
+                                        <div class="slider-selection" style="left: 0%; width: 50%;">
+                                        </div>
                                     </div>
-                                </div>
-                                <div class="tooltip top" style="top: -40px; left: 23px;">
-                                    <div class="tooltip-arrow">
+                                    <div class="tooltip top" style="top: -40px; left: 23px;">
+                                        <div class="tooltip-arrow">
+                                        </div>
+                                        <div class="tooltip-inner">Current value: 5</div>
                                     </div>
-                                    <div class="tooltip-inner">Current value: 5</div>
+                                    <input type="text" class="span2 form-control" value="4" id="time_slider"
+                                        name="reading_time">
+                                    
                                 </div>
-                                <input type="text" class="span2 form-control" value="4" id="time_slider"
-                                    name="reading_time">
-                                
-                            </div>
                         </div>
                         <div class="col-md-3">
-                            <div class="row">
-                                <button type="submit" class="btn btn-default btn-lg">Summarize this Bill!</button>
+                            <div class="row align-items-start">
+                                <button type="submit" class="btn btn-default btn-lg" style="margin-bottom: 15px">Summarize this Bill!</button>
                             </div>
-                            <div>
+                            <div class="row align-items-end">
                                 <button id="clear_btn" class="btn btn-default btn-lg">Find Another</button>
                             </div>
                         </div>
