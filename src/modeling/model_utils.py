@@ -65,14 +65,6 @@ def apply_model(bills_info, bill_id, model=None, tfidf_train=None, train=False,
                                        word_embeddings=word_embeddings, 
                                        embedding_size=embedding_size, 
                                        get_vecs=get_vecs, nlp_lib=nlp_lib)
-    #print(X.columns)
-    #print(X.shape)
-    # CURRENT
-    # ['loc_ix', 'tag', 'text', 'tag_rank', 'bill_id', 'clean_text', 'abs_loc',
-    #    'norm_loc', 'title_word_count', 'char_count', 'word_count',
-    #    'word_density']
-
-    #print(X['clean_text'])
 
     features = X.drop(columns=['loc_ix', 'tag', 'text',
                             'clean_text', 'bill_id']).copy()
@@ -85,12 +77,9 @@ def apply_model(bills_info, bill_id, model=None, tfidf_train=None, train=False,
         feature_list = [features]
     X_numeric = join_features(feature_list)
 
-    #assert X_numeric.shape[1] == model.n_features_
     y_pred = model.predict(X_numeric)
     y_probs = model.predict_proba(X_numeric)
 
-    #print(y_pred.shape)
-    #print(y_probs.shape)
     X['prediction'] = y_pred
     X['predict_proba0'] = y_probs[:,0]
     X['predict_proba1'] = y_probs[:,1]

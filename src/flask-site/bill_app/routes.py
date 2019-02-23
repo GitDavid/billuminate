@@ -26,7 +26,7 @@ from bill_app import con
 from bill_app import app
 from sqlalchemy import create_engine
 #import en_core_web_lg
-nlp = spacy.load('en', parser=False)
+nlp = spacy.load('en', disable=['parser', 'tagger', 'textcat'])
 
 # elif sys.platform == "darwin":
 
@@ -59,10 +59,10 @@ def bills_output():
     print('BILL ID = {}'.format(bill_id))
 
     bill_title = request.args.get('bill_title')
-    print('BILL Title = {}'.format(bill_title))
+    #print('BILL Title = {}'.format(bill_title))
 
     read_time = request.args.get('reading_time')
-    print('Read time = {}'.format(read_time))
+    #print('Read time = {}'.format(read_time))
 
     if any(x for x in [bill_id, bill_title]):
         bill_df = bill_utils.retrieve_data(
@@ -101,7 +101,7 @@ def bills_output():
         pred_results = X[(X.time_cumulative <= (float(read_time) + .01))
                          | (X.tag == 'section')].copy()
         read_time = int(np.ceil(float(read_time)))
-
+        print(info_dict.keys())
         return render_template("output.html",
                                summarization_result=X[['time_cumulative', 'tag', 'tag_rank', 'text']],
                                bill_info=info_dict,
@@ -124,7 +124,7 @@ def get_bills_by_id(bill_id):
     query = "SELECT bill_id FROM bills WHERE bill_id LIKE '%" + bill_id + "%' LIMIT 10;"
     query_results = pd.read_sql_query(query, con)
     output_list = list(query_results['bill_id'].values)
-    print(output_list)
+    #print(output_list)
     return jsonify(output_list)
 
 
@@ -135,7 +135,7 @@ def get_bills_by_title(title):
         title + "%' LIMIT 10;"
     query_results = pd.read_sql_query(query, con)
     output_list = list(query_results['official_title'].values)
-    print(output_list)
+    #print(output_list)
     return jsonify(output_list)
 
 
@@ -146,7 +146,7 @@ def get_bills_by_subject(subject):
         subject + "%' LIMIT 10;"
     query_results = pd.read_sql_query(query, con)
     output_list = list(query_results['subjects_top_term'].values)
-    print(output_list)
+    #print(output_list)
     return jsonify(output_list)
 
 

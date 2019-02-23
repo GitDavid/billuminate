@@ -16,6 +16,7 @@ import numpy as np
 from data_preparation import bill_utils
 import pandas as pd
 import pickle
+import time
 
 
 def feature_generators(txt_df, feature_dict=None, joint_title=None):
@@ -77,22 +78,24 @@ import re
 def apply_ents(X, nlp):
     ENT_TYPES = ['LAW', 'ORDINAL', 'GPE', 'DATE', 'MONEY', 'LAW', 'EVENT', 'PRODUCT', 'NORP']
 
-    regex_list = [r"^\d+\.\s", r"\s[A]\s", r"\([i]+\)", r"\([I]+\)", r"[i]+\.", 
-                  r"\([A-Z]\)", r"\([a-z]\)", r"\([a-z]\)", r"\([\d]\)",
-                      r"\([A-Z][A-Z]\)", r"\([a-z][a-z]\)"]
+    # regex_list = [r"^\d+\.\s", r"\s[A]\s", r"\([i]+\)", r"\([I]+\)", r"[i]+\.", 
+    #               r"\([A-Z]\)", r"\([a-z]\)", r"\([a-z]\)", r"\([\d]\)",
+    #                   r"\([A-Z][A-Z]\)", r"\([a-z][a-z]\)"]
 
-    sents = X['text'].values
-    for ix in range(len(sents)):
-        s = sents[ix]
-        if not isinstance(s, str):
-            s = " "
-        else:
-            for r in regex_list:
-                s = re.sub(r," ", s)
-        sents[ix] = s
+    sents = X['clean_text'].values
+    # sents = X['text'].values
+    # for ix in range(len(sents)):
+    #     s = sents[ix]
+    #     if not isinstance(s, str):
+    #         s = " "
+    #     else:
+    #         for r in regex_list:
+    #             s = re.sub(r," ", s)
+    #     sents[ix] = s
 
     ent_array = np.zeros((sents.shape[0], len(ENT_TYPES)), dtype=int)
     for ix, sent_list in enumerate(sents):
+        #print(len(sent_list), sent_list)
         for doc in nlp.pipe(sent_list):
             ent_list = [ent.label_ for ent in doc.ents]
             ent_array[ix, :] = [ent_list.count(ENT) for ENT in ENT_TYPES]
@@ -113,22 +116,24 @@ def prepare_features(bill, train=False, word_embeddings=False,
     official_title = bill['official_title'].lower()
     short_title = bill['short_title'].lower()
     joint_title = official_title + short_title
-    print(type(bill))
+    
     X, fvecs = bill_utils.generate_bill_data(bill, train=train,
                                              word_embeddings=word_embeddings, 
                                              embedding_size=embedding_size, 
                                              get_vecs=get_vecs)
   
+    start = time.time()
     X['pagerank'] = apply_pagerank(fvecs)
+    start_01 = time.time()-start
+    print('pagerank time = {}'.format(start_01))
     X, feature_list = feature_generators(X,
                                          joint_title=joint_title)
-    print('after feat gen', X.shape)
+    start_02 = time.time()-start_01
+    print('feature time = {}'.format(start_02))
     X = apply_ents(X, nlp=nlp_lib)
-    print('after apply ent', X.shape)
-    # print(joint_title)
-    # feature_df_cols = ['clean_text', 'tag_rank', 'abs_loc', 'norm_loc']
-    # feature_df_cols.extend(feature_list)
-    # X = full_txt[feature_df_cols]
+    start_03 = time.time()-start_02
+    print('after apply ent', start_03)
+
     X["doc_word_count"] = X["word_count"].sum()
     X['sent_DENSITY'] = X['word_count'].div(X['doc_word_count'].where(X['doc_word_count'] != 0, np.nan))
     X = X.fillna(0)
