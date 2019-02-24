@@ -11,4 +11,4 @@ db_conn = db_conn_string.format(url.path[1:], url.username, url.password, url.ho
 
 con = psycopg2.connect(db_conn)
 
-from bill_app import routes, errors
+from bill_app import routes, errors, site_utils

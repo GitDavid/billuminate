@@ -14,6 +14,7 @@ from sqlalchemy import create_engine
 from wtforms import Form, TextField
 
 from bill_app import app, con
+from bill_app.site_utils import apply_read_time
 from data_preparation import bill_utils, text_utils
 from modeling import model_utils
 
@@ -43,6 +44,7 @@ word_embeddings, _ = text_utils._load_embeddings_other(path_to_embedding)
 def bills_output():
     bill_id = None
     bill_title = None
+    read_time = None
 
     bill_id = request.args.get('bill_id')
     print('BILL ID = {}'.format(bill_id))
@@ -55,7 +57,7 @@ def bills_output():
             con, bill_id=bill_id, bill_title=bill_title, subject=None)
 
         if bill_df.empty:
-
+            # The bill was not found
             return render_template("bill_not_found.html",
                                    bill_id=bill_id,
                                    bill_title=bill_title)
@@ -67,42 +69,34 @@ def bills_output():
                 word_embeddings=word_embeddings, 
                 embedding_size=embedding_size, get_vecs=True, nlp_lib=nlp)
 
-        # estimate words per minute
-        wpm = 200 #words per minute
-        X['read_time'] = np.divide(X['word_count'], wpm).round(decimals=2)
-        X['predict_ranking'] = X['predict_proba1'].rank(ascending=False).astype(int)
-
-        sum_ser = X.sort_values(by='predict_proba1',
-                                ascending=False)['read_time'].cumsum()
-        sum_ser.name = 'time_cumulative'
-
-        X = pd.merge(X, pd.DataFrame(sum_ser), left_index=True, right_index=True)
+        # Determine approximate read time properties
+        X = apply_read_time(X)
         
-        min_slide_val = 1
-        max_slide_val = np.ceil(X['read_time'].sum()).astype(int)
-        if max_slide_val == min_slide_val:
-            max_slide_val += 1
-        if not read_time:
-            read_time = X[X.prediction == 1]['read_time'].sum()
+        # Set readtime slider properties
+        readtime_slider = {'min': 1,
+                           'max': np.ceil(X['time_cumulative'].max()).astype(int),
+                           'current': read_time}
+        if readtime_slider['max'] == readtime_slider['min']:
+            readtime_slider['max'] += 1
+        if not readtime_slider['current']:
+            readtime_slider['current'] = X[X.prediction == 1]['time_cumulative'].max()
+        readtime_slider['current'] = int(np.ceil(float(readtime_slider['current'])))
 
-        pred_results = X[(X.time_cumulative <= (float(read_time) + .01))
-                         | (X.tag == 'section')].copy()
-        read_time = int(np.ceil(float(read_time)))
+
         print(info_dict.keys())
         return render_template("output.html",
-                               summarization_result=X[['time_cumulative', 'tag', 'tag_rank', 'text']],
+                               summarization_result=X[['time_cumulative', 'tag',
+                                                       'tag_rank', 'text']],
                                bill_info=info_dict,
-                               min_slide_val=min_slide_val,
-                               max_slide_val=max_slide_val,
-                               init_slide_val=read_time)
+                               readtime_slider=readtime_slider)
     else:
+        # If no summary returned
         empty_df = pd.DataFrame(columns=['tag', 'tag_rank', 'text'])
+        readtime_slider = {'min': 1, 'max': 10, 'current': 5}
         return render_template("output.html",
                                summarization_result=empty_df,
                                bill_info=None,
-                               min_slide_val=0,
-                               max_slide_val=10,
-                               init_slide_val=5)
+                               readtime_slider=readtime_slider)
 
 
 @app.route('/api/bills/id/<bill_id>', methods=['GET'])
