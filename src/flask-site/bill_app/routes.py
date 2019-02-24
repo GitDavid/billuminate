@@ -1,46 +1,34 @@
-import sys
-if sys.platform == "linux":
-     sys.path.append('/home/ubuntu/repo/billuminate/src/')
-
-     MODEL_ROOT = '/home/ubuntu/repo/billuminate/models/'
-     NLP_MODEL_ROOT = '/home/ubuntu/repo/billuminate/nlp_models/'
-
-elif sys.platform == "darwin":
-    sys.path.append('/Users/melissaferrari/Projects/repo/billuminate/src/')
-
-#sys.path.append('/../../src/')
-
+import json
 import os
+print(os.getcwd())
 import pickle
-from flask import render_template, request, jsonify
-from bill_app import con
+import sys
+sys.path.append('../')
+
+import numpy as np
+import pandas as pd
+import psycopg2
 import spacy
+from flask import jsonify, render_template, request
+from sqlalchemy import create_engine
+from wtforms import Form, TextField
+
+from bill_app import app, con
 from data_preparation import bill_utils, text_utils
 from modeling import model_utils
-import numpy as np
-from wtforms import TextField, Form
-import json
-import psycopg2
-import pandas as pd
-from bill_app import con
-from bill_app import app
-from sqlalchemy import create_engine
-#import en_core_web_lg
-nlp = spacy.load('en', disable=['parser', 'tagger', 'textcat'])
 
-# elif sys.platform == "darwin":
+
+# spacy en_core_web_lg is too large for AWS server
+# disable unnecessary steps in spacy pipeline for speed
+nlp = spacy.load('en', disable=['parser', 'tagger', 'textcat'])
 
 MODEL_ROOT = '../../models/'
 NLP_MODEL_ROOT = '../../nlp_models/'
 
-
-#print('loading models')
 model_save_path = os.path.join(MODEL_ROOT, 'undersampled_RandomForestClassifier10_tfidf10000_other22_linux.pickle')
 with open(model_save_path, 'rb') as trained_model:
     current_model = pickle.load(trained_model)
 
-# model_name = 'over_RandomForestClassifier_on_health_nestimators100_random_state0.pkl'
-#current_model = model_utils.load_model(MODEL_ROOT + model_name)
 tfidf_save_path = os.path.join(MODEL_ROOT, 'tfidf_linux.pickle')
 with open(tfidf_save_path, 'rb') as trained_model:
     tfidf_model = pickle.load(trained_model)
@@ -48,6 +36,7 @@ with open(tfidf_save_path, 'rb') as trained_model:
 embedding_size = 200
 path_to_embedding = NLP_MODEL_ROOT + 'lemmatized-legal/no replacement/legal_lemmatized_no_replacement.bin'
 word_embeddings, _ = text_utils._load_embeddings_other(path_to_embedding)
+
 
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/bills_output', methods=['GET'])
@@ -59,10 +48,7 @@ def bills_output():
     print('BILL ID = {}'.format(bill_id))
 
     bill_title = request.args.get('bill_title')
-    #print('BILL Title = {}'.format(bill_title))
-
     read_time = request.args.get('reading_time')
-    #print('Read time = {}'.format(read_time))
 
     if any(x for x in [bill_id, bill_title]):
         bill_df = bill_utils.retrieve_data(
@@ -81,6 +67,7 @@ def bills_output():
                 word_embeddings=word_embeddings, 
                 embedding_size=embedding_size, get_vecs=True, nlp_lib=nlp)
 
+        # estimate words per minute
         wpm = 200 #words per minute
         X['read_time'] = np.divide(X['word_count'], wpm).round(decimals=2)
         X['predict_ranking'] = X['predict_proba1'].rank(ascending=False).astype(int)
@@ -124,7 +111,6 @@ def get_bills_by_id(bill_id):
     query = "SELECT bill_id FROM bills WHERE bill_id LIKE '%" + bill_id + "%' LIMIT 10;"
     query_results = pd.read_sql_query(query, con)
     output_list = list(query_results['bill_id'].values)
-    #print(output_list)
     return jsonify(output_list)
 
 
@@ -135,7 +121,6 @@ def get_bills_by_title(title):
         title + "%' LIMIT 10;"
     query_results = pd.read_sql_query(query, con)
     output_list = list(query_results['official_title'].values)
-    #print(output_list)
     return jsonify(output_list)
 
 
@@ -146,7 +131,6 @@ def get_bills_by_subject(subject):
         subject + "%' LIMIT 10;"
     query_results = pd.read_sql_query(query, con)
     output_list = list(query_results['subjects_top_term'].values)
-    #print(output_list)
     return jsonify(output_list)
 
 
