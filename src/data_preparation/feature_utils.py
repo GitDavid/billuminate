@@ -139,7 +139,7 @@ def apply_ents(sentences, nlp, df_index=[], ENT_TYPES=None):
 
 def generate_feature_space(bill, feature_list, train=False,
                            word_embeddings=False,
-                           get_vecs=False, nlp_lib=False, tfidf=None):
+                           nlp_lib=False, tfidf=None):
 
     """Generates features for a particular bill.
 
@@ -153,8 +153,8 @@ def generate_feature_space(bill, feature_list, train=False,
             for applying model on new data. Default is False.
         word_embeddings: Dictionary with keys 'embeddings' for the trained
             word2vec model to be applied on text data and 'size' for the
-            length of the embedding vector
-        get_vecs: Whether to return calculated vector embeddings.
+            length of the embedding vector. Got rid of 'get_vecs' because
+            will assume word_embeddings supplied means to get vecs
         nlp_lib: The nlp pipeline to use.
         tfidf: The trained tf-idf model to apply to text features.
 
@@ -173,8 +173,7 @@ def generate_feature_space(bill, feature_list, train=False,
     joint_title = '{} {}'.format(official_title, short_title)
 
     bill_df, fvecs = bill_utils.generate_bill_data(
-        bill, train=train, word_embeddings=word_embeddings,
-        get_vecs=get_vecs)
+        bill, train=train, word_embeddings=word_embeddings,)
     bill_df['clean_text'] = bill_df['clean_text'].fillna("")
 
     feature_space = bill_df[['tag_rank', 'abs_loc', 'norm_loc']].copy()

@@ -16,15 +16,15 @@ def get_bill_dict(bills_info, bill_id):
     return bill
 
 
-def apply_model(bills_info, bill_id, model=None, feature_list=None, tfidf=None,
+def apply_model(bills_info, bill_id, model=None,
+                feature_list=None, tfidf=None,
                 train=False, word_embeddings=False,
-                get_vecs=False, nlp_lib=False):
+                nlp_lib=False):
 
     bill = get_bill_dict(bills_info, bill_id)
     bill_df, feature_space = feature_utils.generate_feature_space(
         bill, feature_list, train=train, word_embeddings=word_embeddings,
-        get_vecs=get_vecs, nlp_lib=nlp_lib,
-        tfidf=tfidf)
+        nlp_lib=nlp_lib, tfidf=tfidf)
 
     X_features = feature_utils.join_features(feature_space)
     bill_df = bill_df.merge(feature_space[0],

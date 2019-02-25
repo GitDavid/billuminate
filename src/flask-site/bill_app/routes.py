@@ -62,7 +62,7 @@ def bills_output():
             bill_df, bill_id, model=current_model, feature_list=feature_list,
             tfidf=tfidf_model, train=False,
             word_embeddings=word_embeddings,
-            get_vecs=True, nlp_lib=nlp)
+            nlp_lib=nlp)
 
         # Determine approximate read time properties
         X = apply_read_time(X)

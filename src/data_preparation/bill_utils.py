@@ -1,15 +1,12 @@
+import sys
+sys.path.append('../')
+
 from data_preparation import text_utils, training_utils
 import pandas as pd
 import numpy as np
 import xml.etree.ElementTree as ET
 import re
 import os
-import sys
-if sys.platform == "linux":
-    sys.path.append('/home/ubuntu/repo/billuminate/src/')
-    sys.path.append('/media/swimmers3/ferrari_06/repo/billuminate/src/')
-elif sys.platform == "darwin":
-    sys.path.append('/Users/melissaferrari/Projects/repo/billuminate/src/')
 
 
 def get_bill(df, bill_id):
@@ -52,8 +49,6 @@ def _return_correct_version(df_bills,
         return df_bills.iloc[0].to_dict()
     else:
         return df_bills
-
-# def retrieve_data_web(url):
 
 
 def retrieve_data(engine, bill_id=None, bill_title=None, subject=None):
@@ -322,14 +317,6 @@ def get_clean_text(text_string, text_type, short_title=None, nlp=None):
         txt_extract = bill_from_xml(text_string)
         txt_df = _clean_extracted_list(txt_extract)
 
-        # # Here we filter on text ranked lower than subsection
-        # # Not sure if this is necessary
-        # txt_dflow = pd.DataFrame(txt_df[txt_df['tag_rank'] > 2]['text'],
-        #                          index=txt_df.index)
-        # # Replace NaN text elements with empty string
-        # full_sents = list(txt_dflow.replace(np.nan, '',
-        #                                     regex=True)['text'].values)
-
         full_sents = list(txt_df.replace(np.nan, '',
                                          regex=True)['text'].values)
 
@@ -339,7 +326,7 @@ def get_clean_text(text_string, text_type, short_title=None, nlp=None):
         return txt_df, full_sents
 
 
-def _describe_full_text(full_string, bill_id, get_vecs=False,
+def _describe_full_text(full_string, bill_id,
                         word_embeddings=None):
 
     full_txt, fsents = get_clean_text(full_string,
@@ -357,7 +344,7 @@ def _describe_full_text(full_string, bill_id, get_vecs=False,
         full_txt['norm_loc'] = (np.divide(locs - locs.min(),
                                           1)).values
 
-    if get_vecs:
+    if word_embeddings:
         fvecs = text_utils._calc_embeddings_set(fsents,
                                                 word_embeddings)
         return full_txt, fvecs
@@ -383,27 +370,24 @@ def _describe_summ_text(summ_string, bill_id, short_title,
 
 def generate_bill_data(bill,
                        word_embeddings=None,
-                       nlp=None, train=False,
-                       get_vecs=True):
+                       nlp=None, train=False):
 
     short_title = bill['short_title']
     full_string = bill['full_text']
     bill_id = bill['bill_id']
 
     if not train:
-        if not get_vecs:
+        if not word_embeddings:
             full_txt = _describe_full_text(full_string, bill_id)
             return full_txt
         else:
             full_txt, fvecs = _describe_full_text(full_string, bill_id,
-                                                  get_vecs,
                                                   word_embeddings)
             return full_txt, fvecs
 
     else:
         assert nlp
         full_txt, fvecs = _describe_full_text(full_string, bill_id,
-                                              get_vecs,
                                               word_embeddings)
 
         summ_string = bill['summary_text']
