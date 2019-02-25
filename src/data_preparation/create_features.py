@@ -1,16 +1,13 @@
 import sys
-if sys.platform == "linux":
-    sys.path.append('/home/ubuntu/repo/billuminate/src/')
-    sys.path.append('/media/swimmers3/ferrari_06/repo/billuminate/src/')
+sys.path.append('../')
 
-elif sys.platform == "darwin":
-    sys.path.append('/Users/melissaferrari/Projects/repo/billuminate/src/')
+import os
+print(os.getcwd())
 
 MODEL_ROOT = '../../models/'
 NLP_MODEL_ROOT = '../../nlp_models/'
 TRAINING_DATA_ROOT = '../../data/training_data/'
 
-import os
 import time
 
 import numpy as np
