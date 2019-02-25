@@ -8,8 +8,8 @@ resources/
 nlp_models
 training_checkpoints/
 # removed bc of redundancy for now.
-create_features.py  
-classification_models.py
+src/data_preparation/create_features.py  
+src/modeling/classification_models.py
 .vsccode/*
 
 # Byte-compiled / optimized / DLL files
