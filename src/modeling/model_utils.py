@@ -1,8 +1,4 @@
 import sys
-# if sys.platform == "linux":
-#     sys.path.append('/home/ubuntu/repo/billuminate/src/')
-# elif sys.platform == "darwin":
-#     sys.path.append('/Users/melissaferrari/Projects/repo/billuminate/src/')
 sys.path.append('../')
 
 from scipy import sparse
