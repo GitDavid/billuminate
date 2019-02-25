@@ -31,7 +31,7 @@ def apply_read_time(X):
 
     return X
 
-def read_time_slider(X, read_time=None):
+def create_read_time_slider(X, read_time=None):
     read_time_slider = {'min': 0.5,
                        'max': np.ceil(X['time_cumulative'].max()).astype(int),
                        'current': read_time}

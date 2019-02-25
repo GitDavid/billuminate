@@ -14,7 +14,7 @@ from sqlalchemy import create_engine
 from wtforms import Form, TextField
 
 from bill_app import app, con
-from bill_app.site_utils import apply_read_time, read_time_slider
+from bill_app.site_utils import apply_read_time, create_read_time_slider
 from data_preparation import bill_utils, text_utils
 from modeling import model_utils
 
@@ -73,7 +73,7 @@ def bills_output():
         X = apply_read_time(X)
         
         # Set read_time slider properties
-        read_time_slider = read_time_slider(X, read_time)
+        read_time_slider = create_read_time_slider(X, read_time)
 
         print(info_dict.keys())
         return render_template("output.html",
