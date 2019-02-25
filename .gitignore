@@ -3,7 +3,7 @@ database_dump.sql
 data/
 test_models/
 # models/
-# notebooks/
+notebooks/
 resources/
 nlp_models
 training_checkpoints/
