@@ -368,27 +368,24 @@ def _describe_summ_text(summ_string, bill_id, short_title,
     return sum_df, svecs
 
 
-def generate_bill_data(bill,
-                       word_embeddings=None,
+def generate_bill_data(bill, word_embeddings=None,
                        nlp=None, train=False):
 
     short_title = bill['short_title']
     full_string = bill['full_text']
     bill_id = bill['bill_id']
 
-    if not train:
-        if not word_embeddings:
-            full_txt = _describe_full_text(full_string, bill_id)
-            return full_txt
-        else:
-            full_txt, fvecs = _describe_full_text(full_string, bill_id,
-                                                  word_embeddings)
-            return full_txt, fvecs
+    if not word_embeddings:
+        full_txt = _describe_full_text(full_string, bill_id)
+        return full_txt
 
     else:
-        assert nlp
         full_txt, fvecs = _describe_full_text(full_string, bill_id,
                                               word_embeddings)
+
+    if train:
+        assert nlp
+        assert word_embeddings
 
         summ_string = bill['summary_text']
 
@@ -419,9 +416,9 @@ def generate_bill_data(bill,
                len(label_df[label_df['in_summary'] == 1]) ==
                len(label_df))
 
-        # embed_data = pd.concat([label_df, summ_data], sort=False)
         label_df = pd.concat([label_df, summ_data], sort=False).copy()
 
-        # return label_df, embed_data, full_txt, sum_df
-
         return label_df, full_txt, sum_df
+
+    else:
+        return full_txt, fvecs
