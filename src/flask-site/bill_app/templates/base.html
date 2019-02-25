@@ -194,18 +194,14 @@
                             </label>
                             <br>
                             <div class="slider slider-horizontal" style="width: fit-content;">
-                                <div class="slider-track">
-                                    <div class="slider-selection" style="left: 0%; width: 50%;">
-                                    </div>
-                                </div>
-                                <div class="tooltip top" style="top: -40px; left: 23px;">
-                                    <div class="tooltip-arrow">
-                                    </div>
-                                    <div class="tooltip-inner">Current value: 5</div>
-                                </div>
-                                <input type="text" data-slider-min="{{ readtime_slider.min }}" data-slider-max="{{ readtime_slider.max }}" value="{{ readtime_slider.current }}" class="span2 form-control" id="time_slider"
+                                <input type="text"
+                                    data-slider-min="{{ read_time_slider.min }}" 
+                                    data-slider-max="{{ read_time_slider.max }}"
+                                    value="{{ read_time_slider.current }}" 
+                                    data-slider-step="0.5"
+                                    class="span2 form-control"
+                                    id="time_slider"
                                     name="reading_time">
-
                             </div>
                         </div>
                         <div class="col-md-3">

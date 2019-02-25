@@ -30,3 +30,15 @@ def apply_read_time(X):
     X = pd.merge(X, pd.DataFrame(sum_ser), left_index=True, right_index=True)
 
     return X
+
+def read_time_slider(X, read_time=None):
+    read_time_slider = {'min': 0.5,
+                       'max': np.ceil(X['time_cumulative'].max()).astype(int),
+                       'current': read_time}
+    if read_time_slider['max'] == read_time_slider['min']:
+        read_time_slider['max'] += 0.5
+    if not read_time_slider['current']:
+        read_time_slider['current'] = X[X.prediction == 1]['time_cumulative'].max()
+    read_time_slider['current'] = int(np.ceil(float(read_time_slider['current'])))
+
+    return read_time_slider
