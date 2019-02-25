@@ -25,7 +25,7 @@ import tqdm
 
 
 def aggregate_training_data(bills_df,
-                            word_embeddings, embedding_size, nlp):
+                            word_embeddings, nlp):
 
     all_text_data = pd.DataFrame()
     all_labeled = pd.DataFrame()
@@ -46,8 +46,8 @@ def aggregate_training_data(bills_df,
             #print(bill_id)
             bill = bills_df[(bills_df['bill_id'] == bill_id)].copy()
             bill = bill_utils._return_correct_version(bill, as_dict=True)
-            get_data = bill_utils.generate_bill_data(bill, word_embeddings,
-                                                     embedding_size, nlp,
+            get_data = bill_utils.generate_bill_data(bill, word_embeddings, 
+                                                     nlp,
                                                      train=True)
             #label_df, embed_data, full_txt, sum_df = get_data
             label_df, full_txt, sum_df = get_data
@@ -113,7 +113,7 @@ def main():
         nlp = spacy.load('en_core_web_lg')
         print("--- That took {} seconds ---".format(time.time() - start_time))
 
-        embedding_size = 200
+        # embedding_size = 200
         #path_to_embedding = 'glove.6B/glove.6B.{}d.txt'.format(embedding_size)
         #path_to_embedding = '/media/swimmers3/ferrari_06/repo/billuminate/nlp_models/glove.6B/glove.6B.{}d.txt'.format(embedding_size)
         #print('Loading word embeddings from {} ...'.format(path_to_embedding))
@@ -138,7 +138,7 @@ def main():
             #bill_df_chunk = bill_df[min_ix[ix]:max_ix[ix]].copy()
             bill_df_chunk = bill_df.loc[min_ix[ix]:max_ix[ix]].copy()#bill_df[min_ix[ix]:max_ix[ix]].copy()
 
-            get_data = aggregate_training_data(bill_df_chunk,word_embeddings=word_embeddings, embedding_size=embedding_size, nlp=nlp)
+            get_data = aggregate_training_data(bill_df_chunk,word_embeddings=word_embeddings, nlp=nlp)
             #get_data = aggregate_training_data(bill_df_chunk, nlp=nlp)
             #all_labeled, all_embed_data, all_text_data, all_sum_text = get_data
             all_labeled, all_text_data, all_sum_text = get_data

@@ -1,18 +1,10 @@
-import json
-import os
-print(os.getcwd())
-import pickle
 import sys
 sys.path.append('../')
 
-import numpy as np
+import os
 import pandas as pd
-import psycopg2
 import spacy
 from flask import jsonify, render_template, request
-from sqlalchemy import create_engine
-from wtforms import Form, TextField
-
 from bill_app import app, con
 from bill_app.site_utils import apply_read_time, create_read_time_slider
 from data_preparation import bill_utils, text_utils
@@ -26,21 +18,21 @@ nlp = spacy.load('en', disable=['parser', 'tagger', 'textcat'])
 MODEL_ROOT = '../../models/'
 NLP_MODEL_ROOT = '../../nlp_models/'
 
-model_save_path = os.path.join(MODEL_ROOT, 'undersampled_RandomForestClassifier10_tfidf10000_other22_linux.pickle')
-with open(model_save_path, 'rb') as trained_model:
-    current_model = pickle.load(trained_model)
-feature_list = ['page_rank', 'title_word_count', 'char_count', 'word_count', 'word_density',
-                 'ents','title_word_DENSITY',
-                'doc_word_count', 'sent_DENSITY', 'tfidf']
+mname = 'undersampled_RandomForestClassifier10_tfidf10000_other22_linux.pickle'
+current_model = model_utils.load_model(os.path.join(MODEL_ROOT, mname))
 
-tfidf_save_path = os.path.join(MODEL_ROOT, 'tfidf_linux.pickle')
-with open(tfidf_save_path, 'rb') as trained_model:
-    tfidf_model = pickle.load(trained_model)
+# This should be saved with model in future!
+feature_list = ['page_rank', 'title_word_count', 'char_count', 'word_count',
+                'word_density', 'ents', 'title_word_DENSITY', 'doc_word_count',
+                'sent_DENSITY', 'tfidf']
 
-embedding_size = 200
-path_to_embedding = NLP_MODEL_ROOT + 'lemmatized-legal/no replacement/legal_lemmatized_no_replacement.bin'
-word_embeddings, _ = text_utils._load_embeddings_other(path_to_embedding)
-    
+tfidf_file_name = 'tfidf_linux.pickle'
+tfidf_model = model_utils.load_model(os.path.join(MODEL_ROOT, tfidf_file_name))
+
+em_name = 'lemmatized-legal/no replacement/legal_lemmatized_no_replacement.bin'
+word_embeddings = text_utils._load_embeddings_other(
+    os.path.join(NLP_MODEL_ROOT, em_name))
+
 
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/bills_output', methods=['GET'])
@@ -68,20 +60,22 @@ def bills_output():
         bill_id = bill_df.bill_id.unique()[0]
         X, info_dict = model_utils.apply_model(
             bill_df, bill_id, model=current_model, feature_list=feature_list,
-                tfidf=tfidf_model, train=False, 
-                word_embeddings=word_embeddings, 
-                embedding_size=embedding_size, get_vecs=True, nlp_lib=nlp)
+            tfidf=tfidf_model, train=False,
+            word_embeddings=word_embeddings,
+            get_vecs=True, nlp_lib=nlp)
 
         # Determine approximate read time properties
         X = apply_read_time(X)
-        
+
         # Set read_time slider properties
         read_time_slider = create_read_time_slider(X, read_time)
 
         print(info_dict.keys())
         return render_template("output.html",
-                               summarization_result=X[['time_cumulative', 'tag',
-                                                       'tag_rank', 'text']],
+                               summarization_result=X[['time_cumulative',
+                                                       'tag',
+                                                       'tag_rank',
+                                                       'text']],
                                bill_info=info_dict,
                                read_time_slider=read_time_slider)
     else:
@@ -97,7 +91,8 @@ def bills_output():
 @app.route('/api/bills/id/<bill_id>', methods=['GET'])
 def get_bills_by_id(bill_id):
 
-    query = "SELECT bill_id FROM bills WHERE bill_id LIKE '%" + bill_id + "%' LIMIT 10;"
+    query = "SELECT bill_id FROM bills WHERE bill_id LIKE '%" + bill_id
+    query = query + "%' LIMIT 10;"
     query_results = pd.read_sql_query(query, con)
     output_list = list(query_results['bill_id'].values)
     return jsonify(output_list)
@@ -116,8 +111,8 @@ def get_bills_by_title(title):
 @app.route('/api/bills/subject/<subject>', methods=['GET'])
 def get_bills_by_subject(subject):
 
-    query = "SELECT subjects_top_term FROM bills WHERE subjects_top_term LIKE '%" + \
-        subject + "%' LIMIT 10;"
+    que = "SELECT subjects_top_term FROM bills WHERE subjects_top_term LIKE '%"
+    query = que + subject + "%' LIMIT 10;"
     query_results = pd.read_sql_query(query, con)
     output_list = list(query_results['subjects_top_term'].values)
     return jsonify(output_list)

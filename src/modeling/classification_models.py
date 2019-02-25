@@ -105,11 +105,6 @@ def save_sparse_matrix(sparse_matrix, save_path):
     sparse.save_npz(save_path, sparse_matrix)
 
 
-def load_model(model_save_path):
-    with open(model_save_path, 'rb') as training_model:
-        model = pickle.load(training_model)
-    return model
-
 
 def create_pipeline():
     text_clf = Pipeline([
@@ -182,7 +177,7 @@ def main():
 
     ## Define classifier
     classifier = LogisticRegression(C=1e5, solver='lbfgs')
-    #classifier = RandomForestClassifier(n_estimators=1000, random_state=0)  
+    #classifier = RandomForestClassifier(n_estimators=1000, random_state=0) 
     #classifier = SGDClassifier(loss='hinge', penalty='l2',
     #                           alpha=1e-3, random_state=42,
     #                           max_iter=5, tol=None)

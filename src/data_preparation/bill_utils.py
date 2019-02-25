@@ -278,7 +278,8 @@ def _clean_extracted_list(txt_extract, tag_rankings=None):
                     list(filter(lambda x: x not in rm_ix, subsection_ix)))
             diff += 1
 #     try:
-#         rm_upto_inclusive = txt_df[txt_df['tag'] == 'short-title'].index.values[0]
+#         rm_upto_inclusive = txt_df[
+#           txt_df['tag'] == 'short-title'].index.values[0]
 #         txt_df = txt_df.loc[rm_upto_inclusive+1:]
     # Concat text between ranked tags
     # THIS SHOULD BE DONE DIFFERENTLY.
@@ -339,7 +340,7 @@ def get_clean_text(text_string, text_type, short_title=None, nlp=None):
 
 
 def _describe_full_text(full_string, bill_id, get_vecs=False,
-                        word_embeddings=None, embedding_size=None):
+                        word_embeddings=None):
 
     full_txt, fsents = get_clean_text(full_string,
                                       text_type='full_text')
@@ -357,12 +358,8 @@ def _describe_full_text(full_string, bill_id, get_vecs=False,
                                           1)).values
 
     if get_vecs:
-        # print(get_vecs)
-        #print(len(word_embeddings.keys()), embedding_size)
-        assert all(x for x in [word_embeddings, embedding_size])
         fvecs = text_utils._calc_embeddings_set(fsents,
-                                                word_embeddings,
-                                                embedding_size)
+                                                word_embeddings)
         return full_txt, fvecs
 
     else:
@@ -370,7 +367,7 @@ def _describe_full_text(full_string, bill_id, get_vecs=False,
 
 
 def _describe_summ_text(summ_string, bill_id, short_title,
-                        word_embeddings, embedding_size, nlp):
+                        word_embeddings, nlp):
     sum_df, ssents = get_clean_text(summ_string,
                                     text_type='summary',
                                     short_title=short_title,
@@ -380,13 +377,12 @@ def _describe_summ_text(summ_string, bill_id, short_title,
     sum_df['clean_text'] = ssents
     sum_df = sum_df.rename(columns={0: 'text'})
     svecs = text_utils._calc_embeddings_set(ssents,
-                                            word_embeddings,
-                                            embedding_size)
+                                            word_embeddings)
     return sum_df, svecs
 
 
 def generate_bill_data(bill,
-                       word_embeddings=None, embedding_size=None,
+                       word_embeddings=None,
                        nlp=None, train=False,
                        get_vecs=True):
 
@@ -401,34 +397,28 @@ def generate_bill_data(bill,
         else:
             full_txt, fvecs = _describe_full_text(full_string, bill_id,
                                                   get_vecs,
-                                                  word_embeddings,
-                                                  embedding_size,
-                                                  )
+                                                  word_embeddings)
             return full_txt, fvecs
 
-    if train:
+    else:
         assert nlp
-        # print(get_vecs)
         full_txt, fvecs = _describe_full_text(full_string, bill_id,
                                               get_vecs,
-                                              word_embeddings,
-                                              embedding_size
-                                              )
+                                              word_embeddings)
 
         summ_string = bill['summary_text']
 
         sum_df, svecs = _describe_summ_text(summ_string, bill_id,
                                             short_title,
                                             word_embeddings,
-                                            embedding_size, nlp)
+                                            nlp)
 
-        get_values = training_utils.label_important(fvecs, svecs,
-                                                    embedding_size,
-                                                    max_sim=0.5)
+        get_values = training_utils.label_important(
+            fvecs, svecs, word_embeddings['size'], max_sim=0.5)
         label_df, sim_mat_mask, mean_importance = get_values
-        summ_data = pd.DataFrame(svecs,
-                                 columns=['embed_{:03}'.format(i)
-                                          for i in range(embedding_size)])
+        summ_data = pd.DataFrame(
+            svecs, columns=['embed_{:03}'.format(i)
+                            for i in range(word_embeddings['size'])])
 
         summ_data = summ_data.reset_index()
         summ_data = summ_data.rename(columns={'index': 'loc_ix'})
@@ -445,7 +435,7 @@ def generate_bill_data(bill,
                len(label_df[label_df['in_summary'] == 1]) ==
                len(label_df))
 
-        #embed_data = pd.concat([label_df, summ_data], sort=False)
+        # embed_data = pd.concat([label_df, summ_data], sort=False)
         label_df = pd.concat([label_df, summ_data], sort=False).copy()
 
         # return label_df, embed_data, full_txt, sum_df

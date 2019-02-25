@@ -6,11 +6,8 @@ import numpy as np
 from gensim.models import KeyedVectors
 import nltk
 import pandas as pd
-#import rouge
+import rouge
 from sklearn.metrics.pairwise import cosine_similarity
-# import pickle
-
-NLP_MODEL_ROOT = '../../nlp_models/'
 
 
 # ------------------------- #
@@ -22,16 +19,14 @@ def _make_lowercase(sentences):
 
 
 def _general_text_cleaning(text):
-    
-    """
-    ## deal with numbered lists
-    r"^\d+\.\s"
-    r"\([i]+\)"
-    r"[i]+\."
-    r"\([A-Z]\)"
-    r"\([a-z]\)"
-    r"\([\d]\)"
-    """
+
+    # deal with numbered lists
+    # r"^\d+\.\s"
+    # r"\([i]+\)"
+    # r"[i]+\."
+    # r"\([A-Z]\)"
+    # r"\([a-z]\)"
+    # r"\([\d]\)"
 
     text = re.sub(r"\'s", "", text)
     text = re.sub(r" whats ", " what is ", text, flags=re.IGNORECASE)
@@ -158,61 +153,61 @@ def _remove_custom(sentence_list, type='sec'):
 # ----- TEXT TO NUMBERS ----- #
 # --------------------------- #
 
-def _load_embeddings(path_to_embedding=None, encoding=None):
+def _load_embeddings(path_to_embedding, encoding=None):
 
-    #if not encoding:
-     #   encoding = 'utf-8'
-
-    if not path_to_embedding:
-        path_to_embedding = NLP_MODEL_ROOT + 'glove.6B/glove.6B.300d.txt'
-
-    # with open(NLP_MODEL_ROOT + 'LeGlove.model', 'rb') as f:
-    #     embeddings = pickle.load(f, encoding='latin-1')
     print(path_to_embedding)
-    f = open(path_to_embedding)#, encoding=encoding)
-    word_embeddings = {}
+    f = open(path_to_embedding)
+    embeddings = {}
     for line in f:
         values = line.split()
         word = values[0]
         coefs = np.asarray(values[1:], dtype='float32')
-        word_embeddings[word] = coefs
+        embeddings[word] = coefs
     f.close()
 
     embedding_size = list(coefs.shape)[0]
-    return word_embeddings, embedding_size
+    word_embeddings = {'embeddings': embeddings,
+                       'size': embedding_size}
+    return word_embeddings
 
 
-def _load_embeddings_other(path_to_embedding=None, binary=True, encoding='latin-1'):
-
-    if not path_to_embedding:
-        spec_path = 'word2vec-legal/lemmatized-legal/no replacement/legal_lemmatized_no_replacement.bin'
-        path_to_embedding = NLP_MODEL_ROOT + spec_path
+def _load_embeddings_other(path_to_embedding, binary=True,
+                           encoding='latin-1'):
 
     print(path_to_embedding)
-    wmodel = KeyedVectors.load_word2vec_format(path_to_embedding, binary=binary, encoding=encoding)
-    word_embeddings = {}
+    wmodel = KeyedVectors.load_word2vec_format(path_to_embedding,
+                                               binary=binary,
+                                               encoding=encoding)
+    embeddings = {}
     for idx, key in enumerate(wmodel.vocab):
-        word_embeddings[key] = wmodel.get_vector(key)
-   
-    embedding_size = list(word_embeddings[key].shape)[0]
-    return word_embeddings, embedding_size
+        embeddings[key] = wmodel.get_vector(key)
+
+    embedding_size = list(embeddings[key].shape)[0]
+
+    word_embeddings = {'embeddings': embeddings,
+                       'size': embedding_size}
+
+    return word_embeddings
 
 
+def _calc_embedding(sen, word_embeddings):
 
-def _calc_embedding(sen, word_embeddings, embedding_size=None):
+    embeddings = word_embeddings['embeddings']
+    size = word_embeddings['size']
 
-    if not embedding_size:
-        embedding_size = random.choice(list(word_embeddings.values())).shape
+    if not size:
+        size = random.choice(list(embeddings.values())).shape
+
     if len(sen) != 0:
         try:
-            vector = sum([word_embeddings.get(w, np.zeros(embedding_size))
+            vector = sum([embeddings.get(w, np.zeros(size))
                           for w in sen.split()])/(len(sen.split())+0.001)
         except TypeError:
             sen_emb = []
             for w in sen.split():
                 try:
-                    word = word_embeddings['dictionary'][w]
-                    e = word_embeddings['word_vectors'][word]
+                    word = embeddings['dictionary'][w]
+                    e = embeddings['word_vectors'][word]
                 except ValueError:
                     e = np.zeros((100,)).shape
                 sen_emb.append(e)
@@ -220,16 +215,13 @@ def _calc_embedding(sen, word_embeddings, embedding_size=None):
 
     else:
         # If no embedding exists. Return array of zeros.
-        vector = np.zeros(embedding_size)
+        vector = np.zeros(size)
     return vector
 
 
-def _calc_embeddings_set(sents, word_embeddings, embedding_size=None):
+def _calc_embeddings_set(sents, word_embeddings):
 
-    if not embedding_size:
-        embedding_size = random.choice(list(word_embeddings.values())).shape
-
-    sent_vects = [_calc_embedding(s, word_embeddings, embedding_size)
+    sent_vects = [_calc_embedding(s, word_embeddings)
                   for s in sents]
 
     return sent_vects
@@ -241,11 +233,6 @@ def _calc_embeddings_set(sents, word_embeddings, embedding_size=None):
 
 def _create_sim_mat(vecs_1, vecs_2, embedding_size):
     sim_mat = np.zeros([len(vecs_1), len(vecs_2)])
-#     vlen = embedding_size
-#     for i in range(len(vecs_1)):
-#         for j in range(len(vecs_2)):
-#             sim_mat[i][j] = cosine_similarity(vecs_1[i].reshape(1, vlen),
-#                                               vecs_2[j].reshape(1, vlen))[0, 0]
     sim_mat = cosine_similarity(vecs_1, vecs_2)
     return sim_mat
 
@@ -274,26 +261,3 @@ def _sort_matrix_ix(sim_mat, num_rows=1, axis=0):
     ix_match = np.sort(ix_match.flatten())
     ix_match = np.unique(ix_match)
     return ix_sort, ix_match
-
-
-def _extract_entities(sentences, nlp, good_ents=None, bad_ents=None):
-
-    # Needs work before use
-    if not bad_ents:
-        bad_ents = ['WORK_OF_ART', 'CARDINAL']
-
-    df_ent = pd.DataFrame()
-    for ix, sentence in enumerate(sentences):
-        if not isinstance(sentence, str):
-            sentence = " "
-        doc = nlp(sentence)
-        for ent in doc.ents:
-
-            df_ent = df_ent.append([[ix, ent.text, ent.start_char,
-                                     ent.end_char, ent.label_]],
-                                   ignore_index=True)
-
-    df_ent.columns = ['sentence', 'text', 'start_char', 'end_char', 'label']
-    df_ent = df_ent[(~df_ent.label.isin(bad_ents)) &
-                    (~df_ent['text'].apply(str.isspace))]
-    return df_ent

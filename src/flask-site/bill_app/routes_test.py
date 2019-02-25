@@ -25,9 +25,8 @@ NLP_MODEL_ROOT = '../../../nlp_models/'
 #NLP_MODEL_ROOT = '../../nlp_models/'
 
 
-embedding_size = 200
 path_to_embedding = NLP_MODEL_ROOT + 'lemmatized-legal/no replacement/legal_lemmatized_no_replacement.bin'
-word_embeddings, _ = text_utils._load_embeddings_other(path_to_embedding)
+word_embeddings = text_utils._load_embeddings_other(path_to_embedding)
 
 user = 'melissaferrari'  # add your Postgres username here
 host = 'localhost'
@@ -63,8 +62,7 @@ def bills_output():
         bill_id = bill_df.bill_id.unique()[0]
         X, info_dict = model_utils.apply_model(bill_df, bill_id, model=current_model, 
                 tfidf_train=tfidf_model, train=False, 
-                word_embeddings=word_embeddings, 
-                embedding_size=embedding_size, get_vecs=True, nlp_lib=nlp)
+                word_embeddings=word_embeddings, get_vecs=True, nlp_lib=nlp)
 
         wpm = 200  # words per minute
         X['read_time'] = np.divide(X['word_count'], wpm).round(decimals=2)

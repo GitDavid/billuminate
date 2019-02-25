@@ -15,15 +15,13 @@ import numpy as np
 import pandas as pd
 import sqlalchemy
 import datetime
-import pdb
 
-from modeling import model_utils
 from data_preparation import bill_utils
 import tqdm
 
 
 def aggregate_feature_data(features_df, train_df, bills_info,
-                           word_embeddings, embedding_size):
+                           word_embeddings):
 
     all_X = pd.DataFrame()
     all_y = pd.DataFrame()
@@ -42,18 +40,17 @@ def aggregate_feature_data(features_df, train_df, bills_info,
             official_title = bill['official_title'].lower()
             short_title = bill['short_title'].lower()
             joint_title = official_title + short_title
-            #print(bill.keys())
+            # print(bill.keys())
             if not train:
                 get_data = bill_utils.generate_bill_data(bill, word_embeddings=None,
-                                                        embedding_size=None,
                                                         train=False, get_vecs=False)
                 full_txt = get_data
-            #pdb.set_trace()
+            
             feat_data = feature_utils.feature_generators(
                 feature_df, joint_title=joint_title)
 
             feature_df, feature_list = feat_data
-            #pdb.set_trace()
+            
             embeds_df = train_df[train_df.bill_id == bill_id].copy()
             #y = embeds_df[['bill_id', 'in_summary']]
             y = embeds_df[['bill_id', 'in_summary', 'mean_importance']]
@@ -126,8 +123,7 @@ def main():
     # Organize feature space
     bills_info = pd.read_sql_table('bills', con=engine)
     df_X, df_y = aggregate_feature_data(features_df, train_df, bills_info, 
-                                       word_embeddings=None,
-                                                     embedding_size=None)
+                                       word_embeddings=None)
 
     # Save features
     save_name_X = '{}_features_X.csv'.format(save_name)
