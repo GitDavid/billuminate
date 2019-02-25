@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 import sys
 sys.path.append('../../')
-from data_preparation import feature_utils,  bill_utils
+from data_preparation import bill_utils
 
 MODEL_ROOT = '../../../models/'
 NLP_MODEL_ROOT = '../../../nlp_models/'

@@ -20,7 +20,8 @@ import sqlalchemy
 import datetime
 import pdb
 
-from data_preparation import feature_utils, bill_utils
+from modeling import model_utils
+from data_preparation import bill_utils
 import tqdm
 
 

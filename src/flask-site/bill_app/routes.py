@@ -29,6 +29,9 @@ NLP_MODEL_ROOT = '../../nlp_models/'
 model_save_path = os.path.join(MODEL_ROOT, 'undersampled_RandomForestClassifier10_tfidf10000_other22_linux.pickle')
 with open(model_save_path, 'rb') as trained_model:
     current_model = pickle.load(trained_model)
+feature_list = ['page_rank', 'title_word_count', 'char_count', 'word_count', 'word_density',
+                 'ents','title_word_DENSITY',
+                'doc_word_count', 'sent_DENSITY', 'tfidf']
 
 tfidf_save_path = os.path.join(MODEL_ROOT, 'tfidf_linux.pickle')
 with open(tfidf_save_path, 'rb') as trained_model:
@@ -37,7 +40,7 @@ with open(tfidf_save_path, 'rb') as trained_model:
 embedding_size = 200
 path_to_embedding = NLP_MODEL_ROOT + 'lemmatized-legal/no replacement/legal_lemmatized_no_replacement.bin'
 word_embeddings, _ = text_utils._load_embeddings_other(path_to_embedding)
-
+    
 
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/bills_output', methods=['GET'])
@@ -64,8 +67,8 @@ def bills_output():
 
         bill_id = bill_df.bill_id.unique()[0]
         X, info_dict = model_utils.apply_model(
-            bill_df, bill_id, model=current_model, 
-                tfidf_train=tfidf_model, train=False, 
+            bill_df, bill_id, model=current_model, feature_list=feature_list,
+                tfidf=tfidf_model, train=False, 
                 word_embeddings=word_embeddings, 
                 embedding_size=embedding_size, get_vecs=True, nlp_lib=nlp)
 
