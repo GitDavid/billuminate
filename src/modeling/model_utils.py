@@ -1,7 +1,8 @@
+import pickle
+
 import sys
 sys.path.append('../')
 from data_preparation import bill_utils, feature_utils
-import pickle
 
 
 def load_model(model_save_path):

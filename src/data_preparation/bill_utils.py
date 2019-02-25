@@ -1,12 +1,13 @@
-import sys
-sys.path.append('../')
-
-from data_preparation import text_utils, training_utils
 import pandas as pd
 import numpy as np
 import xml.etree.ElementTree as ET
 import re
 import os
+
+import sys
+sys.path.append('../')
+
+from data_preparation import text_utils, training_utils
 
 
 def get_bill(df, bill_id):

@@ -1,13 +1,13 @@
-import sys
-sys.path.append('../')
-
 from networkx import nx
 from sklearn.metrics.pairwise import cosine_similarity
 import pandas as pd
 import pickle
-from data_preparation import bill_utils
 import numpy as np
 from scipy import sparse
+
+import sys
+sys.path.append('../')
+from data_preparation import bill_utils
 
 
 def load_trained_tfidf(file_path):
