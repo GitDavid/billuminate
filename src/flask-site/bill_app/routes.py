@@ -1,14 +1,13 @@
+from bill_app.site_utils import apply_read_time, create_read_time_slider
+from bill_app import app, con
+from flask import jsonify, render_template, request
+import spacy
+import pandas as pd
+import os
 import sys
 sys.path.append('../')
-
-import os
-import pandas as pd
-import spacy
-from flask import jsonify, render_template, request
-from bill_app import app, con
-from bill_app.site_utils import apply_read_time, create_read_time_slider
-from data_preparation import bill_utils, text_utils
 from modeling import model_utils
+from data_preparation import bill_utils, text_utils
 
 
 # spacy en_core_web_lg is too large for AWS server
@@ -18,7 +17,7 @@ nlp = spacy.load('en', disable=['parser', 'tagger', 'textcat'])
 MODEL_ROOT = '../../models/'
 NLP_MODEL_ROOT = '../../nlp_models/'
 
-mname = 'undersampled_RandomForestClassifier10_tfidf10000_other22_linux.pickle'
+mname = 'RFC10_tfidf_numfeat22_linux.pickle'
 current_model = model_utils.load_model(os.path.join(MODEL_ROOT, mname))
 
 # This should be saved with model in future!
