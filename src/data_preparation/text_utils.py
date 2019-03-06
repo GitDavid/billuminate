@@ -6,7 +6,7 @@ import numpy as np
 from gensim.models import KeyedVectors
 import nltk
 import pandas as pd
-import rouge
+#import rouge
 from sklearn.metrics.pairwise import cosine_similarity
 
 
