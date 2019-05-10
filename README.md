@@ -6,4 +6,4 @@
   <img src="images/billuminate-timeslider.png"" alt="Map Image" width="750"/>
 </p>
 
-[Website](billuminate.melissa-ferrari.com)
+[Website](http://billuminate.melissa-ferrari.com/)
